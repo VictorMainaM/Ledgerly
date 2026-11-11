@@ -1,0 +1,30 @@
+{\rtf1\ansi\deff0\uc1{\fonttbl{\f0 Aptos;}}{\colortbl;\red21\green88\blue62;\red104\green116\blue109;\red136\green91\blue32;}
+\pard\sb0\sa180\f0\fs44\b\cf1 Ledgerly User Terms and Conditions\b0\par
+\pard\sa300\f0\fs22\cf2 Draft for review | 11 November 2026\par
+\pard\sa180\f0\fs22\b\cf3 This general-use draft is not legal advice. Have a qualified legal professional review it before relying on it as a binding agreement or distributing it to customers.\b0\par
+\pard\sb240\sa100\f0\fs30\b\cf1 1. Acceptance and scope\b0\par
+\pard\sa120\f0\fs22\cf0 These terms apply to use of the Ledgerly application and its accompanying local Excel connector. By using Ledgerly, you agree to these terms. If you do not agree, stop using the application.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 2. Permitted use\b0\par
+\pard\sa120\f0\fs22\cf0 Use Ledgerly for lawful business recordkeeping on devices and workbooks you own or are authorized to use. You are responsible for controlling access to the computer, browser profile, exported backups and Excel workbook.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 3. Local data and privacy\b0\par
+\pard\sa120\f0\fs22\cf0 Ledgerly stores application records in the browser profile on the device where it is used. It does not provide a hosted account or automatic cloud storage. Anyone with access to that browser profile or computer may be able to access the records.\par
+\pard\sa120\f0\fs22\cf0 The Excel connector communicates with the local Ledgerly app through a loopback connection on the same computer. Keep its one-time token private and close the connector when synchronization is complete. Do not expose the connector to a network.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 4. Backups and device transfers\b0\par
+\pard\sa120\f0\fs22\cf0 You are responsible for maintaining and protecting regular JSON backups and separate Excel workbook backups. Importing a JSON backup replaces the app records currently on that device. Check the destination data and keep a backup before importing.\par
+\pard\sa120\f0\fs22\cf0 Moving the app to another folder, changing browsers or using another browser profile may make original local records unavailable in that context. Export records before moving or changing devices, and import the backup on the new device.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 5. Accuracy and business decisions\b0\par
+\pard\sa120\f0\fs22\cf0 You are responsible for entering accurate and complete dates, parties, item quantities, unit costs, payment methods, production inputs and transport details. Review reports and sync conflicts before relying on them. Keep receipts, invoices and other required source documents.\par
+\pard\sa120\f0\fs22\cf0 Ledgerly provides arithmetic and recordkeeping features only. It does not provide accounting, tax, legal, investment or other professional advice, and its reports may not meet every statutory or reporting requirement. Consult a qualified professional for advice applicable to your business.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 6. Excel synchronization\b0\par
+\pard\sa120\f0\fs22\cf0 Synchronization is initiated manually by you. You are responsible for selecting the correct workbook, saving workbook edits, maintaining workbook backups and resolving conflicts carefully. The connector preserves original workbook tabs and writes Ledgerly data to dedicated tabs. Review the workbook after syncing.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 7. Availability and warranty\b0\par
+\pard\sa120\f0\fs22\cf0 The application and connector are provided as-is and as-available, without a promise that they will be uninterrupted, error-free or suitable for every purpose. Device, browser, Excel and operating-system updates may affect behavior. Keep backups before updates or changes.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 8. Limitation of liability\b0\par
+\pard\sa120\f0\fs22\cf0 To the extent permitted by applicable law, the application provider is not responsible for indirect or consequential loss, lost profits, lost data, inaccurate records, failed backups, incorrect workbook selection or decisions made using Ledgerly reports. Nothing in these terms excludes liability that applicable law does not allow to be excluded.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 9. Ownership and attribution\b0\par
+\pard\sa120\f0\fs22\cf0 The application displays the attribution \ldblquote A Victor Maina Production\rdblquote. Do not misrepresent authorship or remove attribution when sharing the application. Obtain any permissions required for redistribution or commercial resale.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 10. Changes and review\b0\par
+\pard\sa120\f0\fs22\cf0 These terms may be updated as the application changes. The date above identifies this draft. Review the current document before continued use or distribution. If any provision is unenforceable, the remaining provisions continue to the extent permitted by law.\par
+\pard\sb240\sa100\f0\fs30\b\cf1 11. Contact and governing law\b0\par
+\pard\sa120\f0\fs22\cf0 No contact details or governing jurisdiction have been specified in this draft. Add appropriate contact details and have a qualified local legal professional complete this section before publishing or relying on these terms.\par
+}
