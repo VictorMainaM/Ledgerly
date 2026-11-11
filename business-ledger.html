@@ -1,0 +1,2039 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7fb">
+  <link rel="icon" type="image/svg+xml" href="ledgerly-icon.svg">
+  <link rel="icon" type="image/x-icon" href="ledgerly-icon.ico">
+  <title>Ledgerly — Business workspace</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17231f;
+      --muted: #77827d;
+      --line: #e8ece8;
+      --paper: #fff;
+      --canvas: #f5f7f5;
+      --green: #1d7653;
+      --green-dark: #15583e;
+      --mint: #e9f4ed;
+      --amber: #f2ad50;
+      --red: #c65a51;
+      --shadow: 0 16px 42px rgba(34, 52, 43, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--canvas); color: var(--ink); min-width: 320px; }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 252px; flex: 0 0 252px; background: #fff; border-right: 1px solid var(--line);
+      padding: 27px 17px 20px; display: flex; flex-direction: column; transition: transform .24s ease;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px 31px; }
+    .brand-mark {
+      width: 37px; height: 37px; display: grid; place-items: center; border-radius: 12px;
+      color: #fff; font-weight: 800; font-size: 19px; background: linear-gradient(145deg, #39a474, #176947);
+      box-shadow: 0 7px 15px rgba(29,118,83,.22);
+    }
+    .brand-name { font-size: 17px; font-weight: 760; letter-spacing: -.5px; }
+    .brand-name span { color: var(--green); }
+    .workspace-label { padding: 0 12px 12px; color: #9aa39e; font-size: 10px; font-weight: 750; letter-spacing: 1.15px; text-transform: uppercase; }
+    .nav { display: grid; gap: 5px; }
+    .nav button {
+      display: flex; align-items: center; gap: 12px; border: 0; border-radius: 11px; background: transparent;
+      color: #65716b; text-align: left; padding: 11px 12px; font-size: 13px; font-weight: 600; transition: .18s ease;
+    }
+    .nav button:hover { color: var(--green); background: #f5f9f6; }
+    .nav button.active { color: var(--green-dark); background: var(--mint); font-weight: 720; }
+    .nav-icon { width: 19px; height: 19px; display: grid; place-items: center; font-size: 16px; }
+    .side-bottom { margin-top: auto; }
+    .privacy-box { margin: 12px 5px 16px; padding: 14px; border-radius: 13px; background: #f5f8f5; }
+    .privacy-box strong { display: block; font-size: 11px; margin-bottom: 5px; }
+    .privacy-box p { color: var(--muted); font-size: 10px; line-height: 1.6; margin: 0; }
+    .profile-button {
+      width: 100%; display: flex; gap: 10px; align-items: center; padding: 12px; border: 0;
+      border-top: 1px solid var(--line); background: #fff; text-align: left;
+    }
+    .avatar { width: 33px; height: 33px; border-radius: 50%; display: grid; place-items: center; background: #dceee2; color: var(--green); font-size: 12px; font-weight: 800; }
+    .profile-name { min-width: 0; }
+    .profile-name strong { display: block; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-name small { color: var(--muted); font-size: 10px; }
+    .main { flex: 1; min-width: 0; padding: 29px clamp(18px, 4vw, 54px) 50px; }
+    .app-footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line); color: #929d97; text-align: center; font-size: 10px; letter-spacing: .45px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 31px; }
+    .greeting h1 { font-size: clamp(22px, 3vw, 29px); letter-spacing: -.9px; margin: 0 0 5px; font-weight: 760; }
+    .greeting p { margin: 0; color: var(--muted); font-size: 12px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .date-pill, .select-control {
+      border: 1px solid var(--line); background: #fff; color: #52605a; border-radius: 9px;
+      padding: 9px 11px; font-size: 11px; font-weight: 600;
+    }
+    .primary, .secondary, .quiet, .danger-button {
+      border-radius: 9px; padding: 10px 14px; border: 1px solid transparent;
+      font-size: 11px; font-weight: 700; transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+    .mobile-label { display: none; }
+    .primary { color: #fff; background: var(--green); box-shadow: 0 5px 12px rgba(29,118,83,.16); }
+    .primary:hover { background: var(--green-dark); transform: translateY(-1px); box-shadow: 0 8px 17px rgba(29,118,83,.2); }
+    .secondary { color: var(--green-dark); background: #eef6f0; border-color: #e2eee5; }
+    .secondary:hover { background: #e2f0e5; }
+    .quiet { color: #66736c; background: #fff; border-color: var(--line); }
+    .quiet:hover { background: #f8faf8; }
+    .danger-button { color: var(--red); background: #fff3f1; }
+    .icon-button { border: 1px solid var(--line); background: #fff; color: #66736c; width: 36px; height: 36px; border-radius: 9px; }
+    .menu-button { display: none; }
+    .section { display: none; animation: appear .35s ease both; }
+    .section.active { display: block; }
+    @keyframes appear { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 0 0 18px; }
+    .section-heading h2 { font-size: 16px; letter-spacing: -.35px; margin: 0 0 4px; }
+    .section-heading p { color: var(--muted); font-size: 11px; margin: 0; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .metric {
+      background: var(--paper); border: 1px solid #edf0ed; border-radius: 13px; padding: 17px 17px 15px;
+      min-height: 116px; box-shadow: 0 3px 12px rgba(30, 45, 37, .025); transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .metric:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .metric-top { display: flex; justify-content: space-between; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; font-weight: 650; }
+    .metric-icon { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 8px; background: var(--mint); color: var(--green); font-size: 13px; }
+    .metric-value { font-size: 22px; letter-spacing: -.8px; font-weight: 760; margin: 10px 0 3px; }
+    .metric-foot { color: #96a19b; font-size: 9px; }
+    .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(240px, .95fr); gap: 15px; margin-bottom: 18px; }
+    .panel { background: #fff; border: 1px solid #edf0ed; border-radius: 13px; padding: 19px; box-shadow: 0 3px 12px rgba(30, 45, 37, .025); }
+    .panel-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 19px; }
+    .panel-header h3 { margin: 0 0 4px; font-size: 12px; }
+    .panel-header p { color: var(--muted); margin: 0; font-size: 10px; }
+    .chart-legend { display: flex; align-items: center; gap: 12px; color: #7c8781; font-size: 9px; }
+    .legend-dot { display: inline-block; width: 7px; height: 7px; margin-right: 4px; border-radius: 50%; background: #42a777; }
+    .legend-dot.expense { background: #efb361; }
+    .chart { display: flex; align-items: stretch; gap: 8px; height: 156px; padding: 4px 2px 0; border-bottom: 1px solid var(--line); }
+    .chart-month { display: flex; flex: 1; flex-direction: column; justify-content: flex-end; align-items: center; gap: 7px; min-width: 0; }
+    .bar-pair { display: flex; height: 124px; align-items: flex-end; gap: 4px; }
+    .bar { width: clamp(7px, 1.4vw, 15px); min-height: 2px; border-radius: 5px 5px 1px 1px; background: linear-gradient(180deg,#59b787,#318e64); transition: height .45s cubic-bezier(.2,.8,.2,1); }
+    .bar.expense { background: linear-gradient(180deg,#f5c377,#ebad50); }
+    .chart-month small { color: #929d97; font-size: 8px; margin-bottom: -17px; }
+    .chart-empty { display: grid; place-items: center; height: 130px; color: #9aa49f; text-align: center; font-size: 11px; }
+    .quick-card { display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(145deg,#185d41,#27805b); color: #fff; overflow: hidden; position: relative; }
+    .quick-card:after { content: ""; position: absolute; width: 190px; height: 190px; border-radius: 50%; border: 1px solid rgba(255,255,255,.11); right: -85px; top: -88px; box-shadow: 0 0 0 21px rgba(255,255,255,.03), 0 0 0 43px rgba(255,255,255,.025); }
+    .quick-card .panel-header { position: relative; z-index: 1; }
+    .quick-card .panel-header p, .quick-card .panel-header h3 { color: #fff; }
+    .quick-card .panel-header p { opacity: .7; }
+    .quick-total { font-size: 31px; font-weight: 760; letter-spacing: -1px; margin: 11px 0 3px; }
+    .quick-card .muted-light { font-size: 10px; opacity: .68; }
+    .quick-actions { display: flex; gap: 8px; margin-top: 22px; position: relative; z-index: 1; }
+    .quick-actions button { background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.16); color: #fff; }
+    .quick-actions button:hover { background: rgba(255,255,255,.22); }
+    .recent-panel { padding: 0; overflow: hidden; }
+    .recent-panel .panel-header { padding: 18px 19px 0; margin-bottom: 12px; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; text-align: left; }
+    th { color: #8c9791; font-size: 9px; letter-spacing: .3px; font-weight: 700; text-transform: uppercase; padding: 10px 14px; white-space: nowrap; background: #fafbfa; }
+    td { padding: 12px 14px; border-top: 1px solid #f0f2f0; font-size: 10px; color: #44524b; white-space: nowrap; }
+    td strong { color: #26332d; font-weight: 700; }
+    .amount { font-variant-numeric: tabular-nums; font-weight: 700; }
+    .type-badge { display: inline-block; padding: 4px 7px; border-radius: 12px; font-size: 9px; font-weight: 700; background: #eef6f0; color: #24744f; }
+    .type-badge.expense, .type-badge.purchase { background: #fff4e5; color: #ad741e; }
+    .type-badge.income { background: #edf2ff; color: #5269a5; }
+    .empty-state { text-align: center; padding: 35px 20px 37px; color: #87928c; font-size: 11px; }
+    .empty-state b { display: block; color: #45524b; font-size: 12px; margin-bottom: 5px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .toolbar input, .toolbar select { min-height: 35px; }
+    .field-control { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; outline: none; background: #fff; color: #34413a; font-size: 11px; }
+    .field-control:focus { border-color: #7cb697; box-shadow: 0 0 0 3px rgba(67,155,105,.12); }
+    .ledger-export-panel { margin-bottom: 18px; }
+    .ledger-export-controls { display: grid; grid-template-columns: minmax(180px, 1fr) auto; align-items: end; gap: 12px; padding: 14px 19px 18px; }
+    .ledger-account-select { display: grid; gap: 6px; color: #65716b; font-size: 10px; font-weight: 650; }
+    .ledger-account-select select { width: 100%; }
+    .ledger-export-panel button:disabled { cursor: not-allowed; opacity: .48; }
+    .transaction-layout, .docs-layout { display: grid; gap: 15px; }
+    .content-panel { background: #fff; border: 1px solid #edf0ed; border-radius: 13px; overflow: hidden; }
+    .content-panel .panel-header { padding: 18px 19px 0; }
+    .inventory-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+    .stock-card { background: #fff; border: 1px solid #edf0ed; border-radius: 12px; padding: 15px; transition: transform .18s ease, box-shadow .18s ease; }
+    .stock-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .stock-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .stock-initial { color: #9aa39e; font-size: 9px; }
+    .stock-name { font-size: 12px; font-weight: 720; margin: 12px 0 5px; }
+    .stock-qty { font-size: 20px; font-weight: 760; letter-spacing: -.7px; }
+    .stock-qty small { font-size: 10px; color: var(--muted); font-weight: 550; letter-spacing: 0; }
+    .stock-cost { color: #929d97; font-size: 9px; margin-top: 4px; }
+    .stock-alert { color: #bd7824; font-weight: 700; }
+    .document-list { display: grid; gap: 10px; }
+    .document-row { display: flex; align-items: center; gap: 13px; background: #fff; border: 1px solid #edf0ed; border-radius: 11px; padding: 13px 15px; }
+    .doc-icon { width: 35px; height: 35px; display: grid; place-items: center; flex: 0 0 35px; border-radius: 10px; background: #edf5ef; color: var(--green); font-size: 15px; }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-info strong { display: block; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .doc-info small { display: block; color: var(--muted); font-size: 9px; margin-top: 4px; }
+    .doc-amount { font-size: 11px; font-weight: 750; white-space: nowrap; }
+    .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
+    .form-group { display: grid; gap: 6px; min-width: 0; }
+    .form-group.full { grid-column: 1/-1; }
+    .form-group label { color: #59665f; font-size: 10px; font-weight: 650; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; }
+    .form-group textarea { resize: vertical; min-height: 68px; }
+    .production-material-row { grid-column: 1/-1; display: grid; grid-template-columns: minmax(0,1fr) minmax(100px,.55fr) auto; gap: 9px; align-items: end; }
+    .help-text { color: #98a19b; font-size: 9px; line-height: 1.5; }
+    .amount-preview { padding: 12px 13px; border-radius: 9px; display: flex; align-items: center; justify-content: space-between; background: #f3f8f4; color: #66736c; font-size: 10px; }
+    .amount-preview strong { color: var(--green-dark); font-size: 17px; }
+    .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 20; place-items: center; padding: 18px; background: rgba(19,31,25,.38); backdrop-filter: blur(3px); }
+    .modal-backdrop.open { display: grid; animation: fade .18s ease; }
+    @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+    .modal { width: min(590px,100%); max-height: min(92vh, 760px); overflow: auto; border-radius: 16px; background: #fff; box-shadow: 0 24px 80px rgba(15,35,23,.22); animation: pop .22s ease; }
+    @keyframes pop { from { opacity: 0; transform: translateY(9px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .modal-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 22px 23px 15px; border-bottom: 1px solid var(--line); }
+    .modal-head h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.35px; }
+    .modal-head p { color: var(--muted); font-size: 10px; margin: 0; }
+    .modal-body { padding: 18px 23px 22px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 17px; margin-top: 17px; border-top: 1px solid var(--line); }
+    .notice { padding: 11px 12px; border-radius: 9px; color: #5c6e63; background: #f3f8f4; font-size: 10px; line-height: 1.5; }
+    .notice.warning { background: #fff7ec; color: #885b20; }
+    .sync-conflict { padding: 13px; border: 1px solid var(--line); border-radius: 10px; margin-top: 10px; }
+    .sync-conflict strong { display: block; font-size: 11px; margin-bottom: 8px; }
+    .sync-versions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .sync-versions div { padding: 9px; border-radius: 7px; background: #f7f9f7; overflow-wrap: anywhere; }
+    .sync-versions b { display: block; color: #48564e; margin-bottom: 3px; }
+    .toast { position: fixed; z-index: 50; bottom: 20px; left: 50%; transform: translate(-50%,20px); opacity: 0; pointer-events: none; padding: 11px 15px; border-radius: 9px; color: #fff; background: #20352a; font-size: 11px; box-shadow: var(--shadow); transition: .24s ease; }
+    .toast.show { transform: translate(-50%,0); opacity: 1; }
+    .report-card { padding: 22px; background: #fff; border: 1px solid #edf0ed; border-radius: 13px; }
+    .report-card h3 { margin: 0; font-size: 14px; }
+    .report-card>p { color: var(--muted); font-size: 10px; margin: 6px 0 18px; }
+    .report-line { display: flex; justify-content: space-between; gap: 15px; padding: 11px 0; border-top: 1px solid #eff2ef; font-size: 11px; }
+    .report-line.total { font-weight: 760; font-size: 13px; }
+    .business-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    .muted { color: var(--muted); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 1000px) {
+      .sidebar { width: 220px; flex-basis: 220px; }
+      .cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .inventory-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 720px) {
+      .sidebar { position: fixed; z-index: 12; inset: 0 auto 0 0; width: 252px; transform: translateX(-105%); box-shadow: var(--shadow); }
+      .sidebar.open { transform: translateX(0); }
+      .main { padding: 19px 16px 35px; }
+      .topbar { margin-bottom: 24px; align-items: flex-start; }
+      .menu-button { display: inline-grid; place-items: center; margin-right: 8px; }
+      .greeting { display: flex; align-items: flex-start; }
+      .greeting-copy { padding-top: 2px; }
+      .top-actions { gap: 6px; }
+      .date-pill { display: none; }
+      .desktop-label { display: none; }
+      .mobile-label { display: inline; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .section-heading { align-items: flex-start; flex-direction: column; }
+      .section-heading .toolbar { width: 100%; }
+      .ledger-export-controls { grid-template-columns: 1fr; }
+      .ledger-export-controls .toolbar > button { flex: 1 1 145px; }
+    }
+    @media (max-width: 470px) {
+      .cards { gap: 8px; }
+      .metric { padding: 13px; min-height: 104px; }
+      .metric-value { font-size: 18px; }
+      .metric-top { font-size: 9px; }
+      .inventory-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .stock-card { padding: 12px; }
+      .form-grid, .business-fields { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: auto; }
+      .production-material-row { grid-template-columns: minmax(0,1fr) minmax(84px,.6fr) auto; }
+      .top-actions .primary { padding: 9px 10px; }
+      .panel { padding: 14px; }
+    }
+    @media print {
+      body * { visibility: hidden !important; }
+      #print-root, #print-root * { visibility: visible !important; }
+      #print-root { display: block !important; position: absolute; inset: 0; width: 100%; padding: 28px; color: #111; background: #fff; font: 12px Arial,sans-serif; }
+      #print-root h1 { font-size: 22px; }
+      #print-root h2 { margin-top: 32px; font-size: 16px; }
+      #print-root table { margin-top: 14px; }
+      #print-root th, #print-root td { border: 1px solid #ddd; padding: 8px; color: #111; }
+      #print-root th { background: #f2f2f2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">L</div><div class="brand-name">ledger<span>ly</span></div></div>
+      <div class="workspace-label">Workspace</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-page="dashboard"><span class="nav-icon">⌂</span>Overview</button>
+        <button data-page="transactions"><span class="nav-icon">↔</span>Transactions</button>
+        <button data-page="inventory"><span class="nav-icon">▦</span>Inventory</button>
+        <button data-page="production"><span class="nav-icon">⚙</span>Production</button>
+        <button data-page="transport"><span class="nav-icon">⇢</span>Transport &amp; export</button>
+        <button data-page="documents"><span class="nav-icon">▤</span>Documents &amp; reports</button>
+      </nav>
+      <div class="side-bottom">
+        <div class="privacy-box"><strong>🔒 Your data stays yours</strong><p>Saved on this device only. Make regular backups using Export data.</p></div>
+        <button class="profile-button" id="business-profile-button">
+          <div class="avatar" id="business-avatar">B</div>
+          <div class="profile-name"><strong id="business-name-side">My business</strong><small>Business profile</small></div>
+          <span style="margin-left:auto;color:#98a19b">›</span>
+        </button>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="greeting">
+          <button class="icon-button menu-button" id="menu-button" aria-label="Open menu">☰</button>
+          <div class="greeting-copy"><h1 id="page-title">Good morning</h1><p id="page-subtitle">A clear view of how your business is doing.</p></div>
+        </div>
+        <div class="top-actions">
+          <div class="date-pill" id="today-pill"></div>
+          <button class="secondary" id="sync-excel-button">↻ <span class="desktop-label">Sync Excel</span><span class="mobile-label">Sync</span></button>
+          <button class="primary" id="new-transaction-button">＋ <span class="desktop-label">New transaction</span><span class="mobile-label">New</span></button>
+        </div>
+      </header>
+
+      <section class="section active" id="page-dashboard">
+        <div class="section-heading">
+          <div><h2>Your business at a glance</h2><p>These totals update as you record real transactions.</p></div>
+          <select class="select-control" id="dashboard-period" aria-label="Dashboard reporting period">
+            <option value="all">All time</option><option value="month">This month</option><option value="year">This year</option>
+          </select>
+        </div>
+        <div class="cards" id="dashboard-metrics"></div>
+        <div class="dashboard-grid">
+          <div class="panel">
+            <div class="panel-header"><div><h3>Income &amp; spending</h3><p>Monthly activity · KES</p></div><div class="chart-legend"><span><i class="legend-dot"></i>Income</span><span><i class="legend-dot expense"></i>Expenses</span></div></div>
+            <div id="activity-chart"></div>
+          </div>
+          <div class="panel quick-card">
+            <div>
+              <div class="panel-header"><div><h3>Cash position</h3><p>Cash and bank balance carried down</p></div><span>◉</span></div>
+              <div class="quick-total" id="cash-position">KES 0</div><div class="muted-light" id="cash-position-note">Opening balances and recorded cash movements.</div>
+            </div>
+            <div class="quick-actions"><button class="secondary" data-quick-type="sale">＋ Record a sale</button><button class="secondary" data-quick-type="expense">＋ Expense</button></div>
+          </div>
+        </div>
+        <div class="content-panel recent-panel">
+          <div class="panel-header"><div><h3>Recent transactions</h3><p>Your latest business activity</p></div><button class="quiet" data-nav="transactions">View all</button></div>
+          <div id="recent-transactions"></div>
+        </div>
+      </section>
+
+      <section class="section" id="page-transactions">
+        <div class="section-heading">
+          <div><h2>Transactions</h2><p>Track sales, purchases, income and operating expenses.</p></div>
+          <div class="toolbar">
+            <input id="transaction-search" class="field-control" type="search" placeholder="Search transactions" aria-label="Search transactions">
+            <select id="transaction-filter" class="field-control" aria-label="Filter by transaction type">
+              <option value="all">All types</option><option value="sale">Sales</option><option value="purchase">Purchases</option><option value="expense">Expenses</option><option value="income">Other income</option><option value="customer_receipt">Customer receipts</option><option value="supplier_payment">Supplier payments</option><option value="loan_received">Loans received</option><option value="loan_repayment">Loan repayments</option><option value="capital_introduced">Capital introduced</option><option value="capital_withdrawal">Capital withdrawals</option>
+            </select>
+            <button class="primary" id="transaction-new-button">＋ Add transaction</button>
+          </div>
+        </div>
+        <div class="cards" id="transaction-metrics"></div>
+        <div class="content-panel ledger-export-panel">
+          <div class="panel-header"><div><h3>Download &amp; print transaction records</h3><p>Choose an account / description (stock records use the item name) for a separate report, or include every transaction.</p></div></div>
+          <div class="ledger-export-controls">
+            <label class="ledger-account-select" for="transaction-account-select">Account / description
+              <select id="transaction-account-select" class="field-control" aria-label="Select an account or description">
+                <option value="">Select an account</option>
+              </select>
+            </label>
+            <div class="toolbar">
+              <button class="secondary" id="export-account-csv" disabled>Download account CSV</button>
+              <button class="quiet" id="print-account-records" disabled>Print account</button>
+              <button class="secondary" id="export-all-transactions" disabled>Download all transactions</button>
+              <button class="quiet" id="print-all-transactions" disabled>Print all transactions</button>
+            </div>
+          </div>
+        </div>
+        <div class="content-panel"><div id="transactions-table"></div></div>
+      </section>
+
+      <section class="section" id="page-inventory">
+        <div class="section-heading">
+          <div><h2>Inventory</h2><p>On-hand quantities and average purchase cost for stocked items.</p></div>
+          <div class="toolbar">
+            <input id="inventory-search" class="field-control" type="search" placeholder="Find an item" aria-label="Search inventory">
+            <button class="secondary" id="add-item-button">＋ Add item</button>
+          </div>
+        </div>
+        <div class="notice" style="margin-bottom:15px">Imported from your workbook: opening quantities are available, but item costs were blank. Add purchases with their unit cost to begin valuing stock. The two MAUA rows are combined (1,006 pieces).</div>
+        <div class="cards" id="inventory-metrics"></div>
+        <div class="content-panel ledger-export-panel">
+          <div class="panel-header"><div><h3>Download &amp; print inventory</h3><p>Choose an item for a separate stock record or include the full inventory. Exports include all items, not just search results.</p></div></div>
+          <div class="ledger-export-controls">
+            <label class="ledger-account-select" for="inventory-record-select">Inventory item
+              <select id="inventory-record-select" class="field-control" aria-label="Select an inventory item"><option value="">Select an item</option></select>
+            </label>
+            <div class="toolbar">
+              <button class="secondary" id="download-inventory-item" disabled>Download item CSV</button>
+              <button class="quiet" id="print-inventory-item" disabled>Print item</button>
+              <button class="secondary" id="download-all-inventory" disabled>Download all inventory</button>
+              <button class="quiet" id="print-all-inventory" disabled>Print all inventory</button>
+            </div>
+          </div>
+        </div>
+        <div class="inventory-grid" id="inventory-grid"></div>
+      </section>
+
+      <section class="section" id="page-production">
+        <div class="section-heading">
+          <div><h2>Production batches</h2><p>Record raw materials used and finished goods produced.</p></div>
+          <button class="primary" id="production-new-button">＋ Record production</button>
+        </div>
+        <div class="notice" style="margin-bottom:15px">Production consumes the selected raw-material stock and adds the finished quantity to inventory. Material cost and additional production costs become the finished goods' inventory cost, then flow into profit &amp; loss when sold. Materials need a known cost before they can be used.</div>
+        <div class="cards" id="production-metrics"></div>
+        <div class="content-panel ledger-export-panel">
+          <div class="panel-header"><div><h3>Download &amp; print production records</h3><p>Choose a batch for its detailed record or include all batches and material costs.</p></div></div>
+          <div class="ledger-export-controls">
+            <label class="ledger-account-select" for="production-record-select">Production batch
+              <select id="production-record-select" class="field-control" aria-label="Select a production batch"><option value="">Select a batch</option></select>
+            </label>
+            <div class="toolbar">
+              <button class="secondary" id="download-production-batch" disabled>Download batch CSV</button>
+              <button class="quiet" id="print-production-batch" disabled>Print batch</button>
+              <button class="secondary" id="download-all-production" disabled>Download all production</button>
+              <button class="quiet" id="print-all-production" disabled>Print all production</button>
+            </div>
+          </div>
+        </div>
+        <div class="content-panel"><div id="production-table"></div></div>
+      </section>
+
+      <section class="section" id="page-transport">
+        <div class="section-heading">
+          <div><h2>Transport &amp; export</h2><p>Record each load, carrier, journey and transport cost.</p></div>
+          <div class="toolbar">
+            <input id="transport-search" class="field-control" type="search" placeholder="Find a load or carrier" aria-label="Search transport records">
+            <button class="quiet" id="transport-export-button">Download all trips CSV</button>
+            <button class="primary" id="transport-new-button">＋ Record a trip</button>
+          </div>
+        </div>
+        <div class="notice" style="margin-bottom:15px">Fuel and additional trip costs are automatically included in profit &amp; loss and cash flow, based on the payment method. Do not enter the same trip costs again as separate expense transactions.</div>
+        <div class="cards" id="transport-metrics"></div>
+        <div class="content-panel ledger-export-panel">
+          <div class="panel-header"><div><h3>Download &amp; print transport records</h3><p>Choose one trip for its full dispatch record, or print every trip.</p></div></div>
+          <div class="ledger-export-controls">
+            <label class="ledger-account-select" for="transport-record-select">Transport trip
+              <select id="transport-record-select" class="field-control" aria-label="Select a transport trip"><option value="">Select a trip</option></select>
+            </label>
+            <div class="toolbar">
+              <button class="secondary" id="download-transport-trip" disabled>Download trip CSV</button>
+              <button class="quiet" id="print-transport-trip" disabled>Print trip</button>
+              <button class="quiet" id="print-all-transport">Print all trips</button>
+            </div>
+          </div>
+        </div>
+        <div class="content-panel"><div id="transport-table"></div></div>
+      </section>
+
+      <section class="section" id="page-documents">
+        <div class="section-heading">
+          <div><h2>Documents &amp; reports</h2><p>Create print-ready records from transactions, production batches and trips.</p></div>
+          <div class="toolbar"><button class="quiet" id="export-csv-button">Export CSV</button><button class="secondary" id="backup-button">Export data</button><button class="primary" id="print-report-button">Print P&amp;L report</button></div>
+        </div>
+        <div class="notice" style="margin-bottom:17px">For two-way Excel sync, start <strong>start-ledgerly-sync.cmd</strong> in the app folder, then click <strong>Sync Excel</strong>. Sync is manual: save Excel edits first. The workbook gets editable <strong>LEDGERLY TRANSACTIONS</strong>, <strong>LEDGERLY INVENTORY</strong>, <strong>LEDGERLY TRANSPORT</strong>, <strong>LEDGERLY PRODUCTION</strong>, and <strong>LEDGERLY OPENING BALANCES</strong> tabs; the original tabs are preserved.</div>
+        <div class="notice" style="margin-bottom:17px">Choose Print on a transaction for its invoice, receipt or voucher, or print a trip dispatch note from Transport &amp; export. In the print dialog, select “Save as PDF” to save a PDF copy.</div>
+        <div class="section-heading" style="margin-top:24px"><div><h2>Opening balances &amp; balances carried down</h2><p>Enter balances as at a start date; later activity updates the carried-down balances without changing profit or loss.</p></div><div class="toolbar"><button class="primary" id="opening-balances-button">＋ Set opening balances</button><button class="secondary" id="download-balances-button" disabled>Download balances CSV</button><button class="quiet" id="print-balances-button" disabled>Print balances</button></div></div>
+        <div class="notice" style="margin-bottom:14px">Enter each customer, supplier, lender and capital account separately. Credit sales/purchases and receipts/payments update the relevant balances. M-Pesa movements are included with cash. Opening balances are not income or expenses.</div>
+        <div class="content-panel" id="opening-balance-summary"></div>
+        <div class="report-card" id="profit-loss-report"></div>
+        <div class="section-heading" style="margin-top:24px"><div><h2>Transaction documents</h2><p>One document is available for each transaction.</p></div></div>
+        <div class="document-list" id="document-list"></div>
+        <div class="section-heading" style="margin-top:24px"><div><h2>Production batch sheets</h2><p>Printable material-use and finished-goods costing records.</p></div></div>
+        <div class="document-list" id="production-document-list"></div>
+        <div class="section-heading" style="margin-top:27px"><div><h2>Data &amp; privacy</h2><p>Your records are stored in this browser on this device.</p></div></div>
+        <div class="panel">
+          <div class="notice" id="excel-sync-summary" style="margin-bottom:14px">Excel has not been synced yet.</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+            <div style="flex:1;min-width:210px"><strong style="font-size:11px">Back up or restore your records</strong><p class="muted" style="font-size:10px;margin:5px 0 0">Export JSON to keep a complete backup. Restore a backup exported from this app.</p></div>
+            <button class="secondary" id="restore-button">Import backup</button><input id="restore-file" type="file" accept=".json,application/json" hidden>
+          </div>
+        </div>
+      </section>
+      <footer class="app-footer">A VICTOR MAINA PRODUCTION · © 2026</footer>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal" id="modal"></div></div>
+  <div id="print-root" hidden></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script>
+    "use strict";
+    const STORAGE_KEY = "ledgerly-business-data-v1";
+    const SYNC_URL = "http://127.0.0.1:8765/sync";
+    const openingItems = [
+      { name: "PIPE", quantity: 1, unit: "ROLLS" },
+      { name: "RUBBER SOLE", quantity: 24, unit: "SHEETS" },
+      { name: "GLUE", quantity: 5.5, unit: "BOTTLES" },
+      { name: "PACKING SAC", quantity: 1, unit: "PIECES" },
+      { name: "LINING", quantity: 1, unit: "PIECES" },
+      { name: "TECSON", quantity: 64, unit: "SHEETS" },
+      { name: "EVA", quantity: 11, unit: "SHEETS" },
+      { name: "UZI(NO.9)", quantity: 15, unit: "PIECES" },
+      { name: "UZI(NO.10)", quantity: 4, unit: "PIECES" },
+      { name: "SUPER GLUE", quantity: 16, unit: "PIECES" },
+      { name: "RUBBER BAND", quantity: 1.5, unit: "PACKETS" },
+      { name: "PVC", quantity: 2, unit: "SHEETS" },
+      { name: "VELVET", quantity: 1, unit: "SHEETS" },
+      { name: "MAUA", quantity: 1006, unit: "PIECES" }
+    ];
+    const defaultData = () => ({
+      version: 1,
+      business: { name: "My business", phone: "", email: "", address: "", pin: "" },
+      openingBalances: { asOfDate: "", accounts: [] },
+      items: openingItems.map((item, index) => ({ id: `opening-${index + 1}`, ...item, openingQuantity: item.quantity, openingCost: null })),
+      transactions: [],
+      productions: [],
+      transports: [],
+      syncBase: null,
+      lastSyncedAt: null
+    });
+    let data = loadData();
+    let activePage = "dashboard";
+    let toastTimer;
+
+    function loadData() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return defaultData();
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.version === 1 && Array.isArray(parsed.items) && Array.isArray(parsed.transactions)) {
+          return {
+            ...parsed,
+            openingBalances: parsed.openingBalances && Array.isArray(parsed.openingBalances.accounts)
+              ? { asOfDate: String(parsed.openingBalances.asOfDate || ""), accounts: parsed.openingBalances.accounts }
+              : { asOfDate: "", accounts: [] },
+            syncBase: parsed.syncBase ? { ...parsed.syncBase, openingBalances: parsed.syncBase.openingBalances || { asOfDate:"", accounts:[] } } : null,
+            productions: Array.isArray(parsed.productions) ? parsed.productions : [],
+            transports: Array.isArray(parsed.transports) ? parsed.transports : []
+          };
+        }
+        throw new Error("Unrecognized backup format.");
+      } catch (error) {
+        console.error("Could not load saved business data:", error);
+        return defaultData();
+      }
+    }
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+    function fmt(value, decimals = 2) {
+      return new Intl.NumberFormat("en-KE", { minimumFractionDigits: 0, maximumFractionDigits: decimals }).format(Number(value) || 0);
+    }
+    function money(value) { return `KES ${fmt(value)}`; }
+    function todayIso() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    }
+    function localDateTimeNow() {
+      const now = new Date();
+      return `${todayIso()}T${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    }
+    function displayDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(`${iso}T00:00:00`);
+      return Number.isNaN(d.getTime()) ? escapeHtml(iso) : d.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+    }
+    function displayDateTime(value) {
+      if (!value) return "In transit";
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? escapeHtml(value) : `${d.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} · ${d.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit" })}`;
+    }
+    function uniqueId(prefix) { return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`; }
+    function nextTransactionNumber() {
+      const year = new Date().getFullYear();
+      const prefix = `TX-${year}-`;
+      const last = data.transactions.reduce((max, t) => {
+        const number = String(t.number);
+        const suffix = number.startsWith(prefix) ? number.slice(prefix.length) : "";
+        return /^\d+$/.test(suffix) ? Math.max(max, Number(suffix)) : max;
+      }, 0);
+      return `${prefix}${String(last + 1).padStart(4,"0")}`;
+    }
+    function nextProductionNumber(date) {
+      const year = String(date || todayIso()).slice(0,4);
+      const prefix = `PR-${year}-`;
+      const last = data.productions.reduce((max, batch) => {
+        const suffix = String(batch.number || "").startsWith(prefix) ? String(batch.number).slice(prefix.length) : "";
+        return /^\d+$/.test(suffix) ? Math.max(max, Number(suffix)) : max;
+      }, 0);
+      return `${prefix}${String(last + 1).padStart(4,"0")}`;
+    }
+    function nextTransportNumber(departure) {
+      const year = String(departure || todayIso()).slice(0,4);
+      const prefix = `TR-${year}-`;
+      const last = data.transports.reduce((max, trip) => {
+        const suffix = String(trip.number || "").startsWith(prefix) ? String(trip.number).slice(prefix.length) : "";
+        return /^\d+$/.test(suffix) ? Math.max(max, Number(suffix)) : max;
+      }, 0);
+      return `${prefix}${String(last + 1).padStart(4,"0")}`;
+    }
+    function notify(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+    function getItem(id) { return data.items.find(item => item.id === id); }
+    function sortedTransactions(source = data.transactions) {
+      return [...source].sort((a,b) => a.date.localeCompare(b.date) || String(a.createdAt).localeCompare(String(b.createdAt)));
+    }
+    function sortedInventoryActivities() {
+      return [
+        ...data.transactions.map(record => ({ kind: "transaction", record, date: record.date, createdAt: record.createdAt })),
+        ...data.productions.map(record => ({ kind: "production", record, date: record.date, createdAt: record.createdAt }))
+      ].sort((a,b) => a.date.localeCompare(b.date) || String(a.createdAt).localeCompare(String(b.createdAt)) || a.kind.localeCompare(b.kind));
+    }
+    function inventoryLedger() {
+      const stock = new Map(data.items.map(item => {
+        const unknown = item.openingCost === null || item.openingCost === "";
+        return [item.id, {
+          item,
+          unknownQuantity: unknown ? Number(item.openingQuantity) || 0 : 0,
+          knownQuantity: unknown ? 0 : Number(item.openingQuantity) || 0,
+          averageCost: unknown ? null : Number(item.openingCost)
+        }];
+      }));
+      const saleCosts = new Map(), productionCosts = new Map(), issues = [];
+      const addKnownStock = (row, quantity, unitCost) => {
+        const previousValue = row.knownQuantity * (row.averageCost || 0);
+        row.knownQuantity += quantity;
+        row.averageCost = row.knownQuantity > 0 ? (previousValue + quantity * unitCost) / row.knownQuantity : null;
+      };
+
+      for (const activity of sortedInventoryActivities()) {
+        const record = activity.record;
+        if (activity.kind === "transaction") {
+          if (!record.itemId || !stock.has(record.itemId) || !["purchase","sale"].includes(record.type)) continue;
+          const row = stock.get(record.itemId), quantity = Number(record.quantity) || 0;
+          if (record.type === "purchase") {
+            addKnownStock(row, quantity, Number(record.unitPrice) || 0);
+          } else {
+            const unknownSold = Math.min(row.unknownQuantity, quantity);
+            const knownDemand = quantity - unknownSold;
+            if (knownDemand > row.knownQuantity + 0.0000001) {
+              issues.push({ type: "stock", record, item: row.item });
+            }
+            const knownSold = Math.min(row.knownQuantity, knownDemand);
+            saleCosts.set(record.id, {
+              amount: knownSold * (row.averageCost || 0),
+              unknown: unknownSold > 0 || knownSold + 0.0000001 < knownDemand
+            });
+            row.unknownQuantity -= unknownSold;
+            row.knownQuantity -= knownSold;
+          }
+          continue;
+        }
+
+        const output = stock.get(record.outputItemId);
+        let materialCost = 0, invalidCost = false;
+        const materialCosts = [];
+        for (const material of record.materials || []) {
+          const row = stock.get(material.itemId), quantity = Number(material.quantity) || 0;
+          if (!row) {
+            issues.push({ type: "invalid", record });
+            invalidCost = true;
+            continue;
+          }
+          if (quantity > row.unknownQuantity + row.knownQuantity + 0.0000001) {
+            issues.push({ type: "stock", record, item: row.item });
+            invalidCost = true;
+          }
+          const knownUsed = Math.min(row.knownQuantity, quantity);
+          const unknownUsed = Math.min(row.unknownQuantity, quantity - knownUsed);
+          if (unknownUsed > 0.0000001) {
+            issues.push({ type: "unknown-cost", record, item: row.item });
+            invalidCost = true;
+          }
+          const unitCost = row.averageCost || 0, amount = knownUsed * unitCost;
+          materialCost += amount;
+          materialCosts.push({ itemId: material.itemId, quantity, unitCost, amount, unknown: unknownUsed > 0.0000001 });
+          row.unknownQuantity -= unknownUsed;
+          row.knownQuantity -= knownUsed;
+        }
+        const additionalCosts = Number(record.additionalCosts) || 0;
+        const totalCost = materialCost + additionalCosts;
+        const outputQuantity = Number(record.outputQuantity) || 0;
+        if (output && outputQuantity > 0) {
+          if (invalidCost) output.unknownQuantity += outputQuantity;
+          else addKnownStock(output, outputQuantity, totalCost / outputQuantity);
+        }
+        productionCosts.set(record.id, {
+          materialCost,
+          additionalCosts,
+          totalCost,
+          unitCost: outputQuantity > 0 ? totalCost / outputQuantity : 0,
+          unknown: invalidCost,
+          materials: materialCosts
+        });
+      }
+      return { stock, saleCosts, productionCosts, issues };
+    }
+    function hasInvalidInventoryHistory() {
+      return inventoryLedger().issues.length > 0;
+    }
+    function currentStock() {
+      const { stock } = inventoryLedger();
+      return [...stock.values()].map(row => ({
+        ...row,
+        quantity: row.unknownQuantity + row.knownQuantity,
+        value: row.knownQuantity > 0 && row.averageCost !== null ? row.knownQuantity * row.averageCost : 0
+      }));
+    }
+    function transactionCost(t, ledger = inventoryLedger()) {
+      if (t.type !== "sale" || !t.itemId) return { amount: 0, unknown: false };
+      return ledger.saleCosts.get(t.id) || { amount: 0, unknown: true };
+    }
+    function inPeriod(t, period) {
+      if (period === "all") return true;
+      const iso = t.date || String(t.departure || "").slice(0,10);
+      const date = new Date(`${iso}T00:00:00`), now = new Date();
+      if (period === "month") return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+      if (period === "year") return date.getFullYear() === now.getFullYear();
+      return true;
+    }
+    function totals(source = data.transactions, transportSource = data.transports, productionSource = data.productions) {
+      let sales = 0, otherIncome = 0, recordedExpenses = 0, cogs = 0, cashIn = 0, cashOut = 0, unknownCostSales = 0;
+      const ledger = inventoryLedger();
+      for (const t of source) {
+        const amount = Number(t.amount) || 0;
+        if (t.type === "sale") {
+          sales += amount;
+          const cost = transactionCost(t, ledger);
+          cogs += cost.amount;
+          if (cost.unknown) unknownCostSales++;
+          if (t.payment !== "Credit") cashIn += amount;
+        } else if (t.type === "income") {
+          otherIncome += amount;
+          if (t.payment !== "Credit") cashIn += amount;
+        } else if (t.type === "expense") {
+          recordedExpenses += amount;
+          if (t.payment !== "Credit") cashOut += amount;
+        } else if (t.type === "purchase") {
+          if (t.payment !== "Credit") cashOut += amount;
+        } else if (["customer_receipt","loan_received","capital_introduced"].includes(t.type)) {
+          if (t.payment !== "Credit") cashIn += amount;
+        } else if (["supplier_payment","loan_repayment","capital_withdrawal"].includes(t.type)) {
+          if (t.payment !== "Credit") cashOut += amount;
+        }
+      }
+      const transportExpenses = transportSource.reduce((sum, trip) => sum + (Number(trip.fuelCost) || 0) + (Number(trip.additionalCosts) || 0), 0);
+      const transportCashOut = transportSource.reduce((sum, trip) => sum + (trip.payment === "Credit" ? 0 : (Number(trip.fuelCost) || 0) + (Number(trip.additionalCosts) || 0)), 0);
+      const productionCashOut = productionSource.reduce((sum, batch) => sum + (batch.payment === "Credit" ? 0 : Number(batch.additionalCosts) || 0), 0);
+      const expenses = recordedExpenses + transportExpenses;
+      cashOut += transportCashOut + productionCashOut;
+      return { sales, otherIncome, expenses, recordedExpenses, transportExpenses, productionCashOut, cogs, grossProfit: sales - cogs, netProfit: sales - cogs - expenses + otherIncome, cash: cashIn - cashOut, cashIn, cashOut, unknownCostSales };
+    }
+    function balanceStartDate() {
+      if (data.openingBalances?.asOfDate) return data.openingBalances.asOfDate;
+      const dates = [
+        ...data.transactions.map(row=>row.date),
+        ...data.productions.map(row=>row.date),
+        ...data.transports.map(row=>String(row.departure||"").slice(0,10))
+      ].filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)).sort();
+      return dates[0] || todayIso();
+    }
+    function accountBalanceSummary() {
+      const rows = new Map();
+      const ensure = (type,name="") => {
+        const label = type === "cash" ? "Cash & M-Pesa" : type === "bank" ? "Bank" : String(name||"").trim();
+        const key = `${type}\u0000${label.toLocaleLowerCase()}`;
+        if (!rows.has(key)) rows.set(key,{type,name:label,opening:0,closing:0});
+        return rows.get(key);
+      };
+      for (const type of ["cash","bank"]) ensure(type);
+      for (const account of data.openingBalances?.accounts || []) {
+        if (!account || !["cash","bank","debtor","creditor","loan","capital"].includes(account.type)) continue;
+        const row = ensure(account.type,account.name);
+        const amount = Number(account.amount)||0;
+        row.opening += amount;
+        row.closing += amount;
+      }
+      const startDate = balanceStartDate();
+      const addMovement = (type,name,amount) => { ensure(type,name).closing += amount; };
+      const addCash = (payment,amount) => {
+        if (payment === "Bank") addMovement("bank","",amount);
+        else if (payment === "Cash" || payment === "M-Pesa") addMovement("cash","",amount);
+      };
+      for (const transaction of data.transactions) {
+        if (transaction.date < startDate) continue;
+        const amount = Number(transaction.amount)||0;
+        switch (transaction.type) {
+          case "sale":
+            if (transaction.payment === "Credit") addMovement("debtor",transaction.party,amount);
+            else addCash(transaction.payment,amount);
+            break;
+          case "purchase":
+            if (transaction.payment === "Credit") addMovement("creditor",transaction.party,amount);
+            else addCash(transaction.payment,-amount);
+            break;
+          case "expense":
+            if (transaction.payment === "Credit") addMovement("creditor",transaction.party||transaction.description,amount);
+            else addCash(transaction.payment,-amount);
+            break;
+          case "income":
+            if (transaction.payment === "Credit") addMovement("debtor",transaction.party||transaction.description,amount);
+            else addCash(transaction.payment,amount);
+            break;
+          case "customer_receipt":
+            addMovement("debtor",transaction.party,-amount);
+            addCash(transaction.payment,amount);
+            break;
+          case "supplier_payment":
+            addMovement("creditor",transaction.party,-amount);
+            addCash(transaction.payment,-amount);
+            break;
+          case "loan_received":
+            addMovement("loan",transaction.party||transaction.description,amount);
+            addCash(transaction.payment,amount);
+            break;
+          case "loan_repayment":
+            addMovement("loan",transaction.party||transaction.description,-amount);
+            addCash(transaction.payment,-amount);
+            break;
+          case "capital_introduced":
+            addMovement("capital",transaction.party||transaction.description,amount);
+            addCash(transaction.payment,amount);
+            break;
+          case "capital_withdrawal":
+            addMovement("capital",transaction.party||transaction.description,-amount);
+            addCash(transaction.payment,-amount);
+            break;
+        }
+      }
+      for (const trip of data.transports) {
+        if (String(trip.departure||"").slice(0,10) < startDate) continue;
+        const amount = (Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0);
+        if (trip.payment === "Credit") addMovement("creditor",trip.carrier,amount);
+        else addCash(trip.payment,-amount);
+      }
+      for (const batch of data.productions) {
+        if (batch.date < startDate) continue;
+        const amount = Number(batch.additionalCosts)||0;
+        if (batch.payment === "Credit") addMovement("creditor","Production costs payable",amount);
+        else addCash(batch.payment,-amount);
+      }
+      const labels = {cash:"Cash",bank:"Bank",debtor:"Customer owed to you",creditor:"Supplier you owe",loan:"Loan payable",capital:"Capital"};
+      return {
+        asOfDate:startDate,
+        rows:[...rows.values()].map(row=>({...row,label:labels[row.type],movement:row.closing-row.opening}))
+          .sort((a,b)=>a.type.localeCompare(b.type)||a.name.localeCompare(b.name,undefined,{sensitivity:"base"})),
+        cashPosition:[...rows.values()].filter(row=>row.type==="cash"||row.type==="bank").reduce((sum,row)=>sum+row.closing,0)
+      };
+    }
+    function renderOpeningBalances() {
+      const summary=accountBalanceSummary();
+      const body=summary.rows.length
+        ? `<div class="table-wrap"><table><thead><tr><th>Account</th><th>Account name</th><th>Balance b/d (KES)</th><th>Movement (KES)</th><th>Balance c/d (KES)</th></tr></thead><tbody>${summary.rows.map(row=>`<tr><td>${escapeHtml(row.label)}</td><td>${escapeHtml(row.name)}</td><td class="amount">${money(row.opening)}</td><td class="amount">${money(row.movement)}</td><td class="amount"><strong>${money(row.closing)}</strong></td></tr>`).join("")}</tbody></table></div><p class="muted" style="font-size:10px;margin:12px 0 0">Balances are brought forward as at ${displayDate(summary.asOfDate)}. Movements dated on or after that date update the carried-down balances.</p>`
+        : `<div class="empty-state"><b>No opening balances or account movements</b>Set balances brought forward to see account balances carried down here.</div>`;
+      document.getElementById("opening-balance-summary").innerHTML=body;
+      document.getElementById("download-balances-button").disabled=summary.rows.length===0;
+      document.getElementById("print-balances-button").disabled=summary.rows.length===0;
+    }
+    function typeLabel(type) {
+      return ({
+        sale:"Sale",purchase:"Purchase",expense:"Expense",income:"Other income",
+        customer_receipt:"Customer receipt",supplier_payment:"Supplier payment",
+        loan_received:"Loan received",loan_repayment:"Loan repayment",
+        capital_introduced:"Capital introduced",capital_withdrawal:"Capital withdrawal"
+      })[type] || type;
+    }
+    function badge(type) { return `<span class="type-badge ${escapeHtml(type)}">${escapeHtml(typeLabel(type))}</span>`; }
+    function renderTable(transactions, { showActions = true, emptyTitle = "No transactions yet", emptyText = "Once you record activity, it will appear here." } = {}) {
+      if (!transactions.length) return `<div class="empty-state"><b>${escapeHtml(emptyTitle)}</b>${escapeHtml(emptyText)}</div>`;
+      const rows = [...transactions].sort((a,b) => b.date.localeCompare(a.date) || String(b.createdAt).localeCompare(String(a.createdAt)));
+      return `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Transaction</th><th>Customer / supplier</th><th>Payment</th><th>Amount</th>${showActions ? "<th>Document</th>" : ""}</tr></thead><tbody>${rows.map(t => `<tr>
+        <td>${displayDate(t.date)}</td><td>${badge(t.type)} <span style="margin-left:5px">${escapeHtml(t.number)}</span></td>
+        <td><strong>${escapeHtml(t.party || t.description || "—")}</strong>${t.itemId ? `<div class="muted" style="font-size:9px;margin-top:3px">${escapeHtml(getItem(t.itemId)?.name || "")} · ${fmt(t.quantity)} ${escapeHtml(t.unit || "")} · ${money(t.unitPrice)} each</div>` : ""}</td>
+        <td>${escapeHtml(t.payment || "—")}</td><td class="amount">${money(t.amount)}</td>
+        ${showActions ? `<td><button class="quiet" data-edit-transaction="${escapeHtml(t.id)}">Edit</button> <button class="quiet" data-print-transaction="${escapeHtml(t.id)}">Print</button> <button class="icon-button" title="Delete transaction" aria-label="Delete transaction" data-delete-transaction="${escapeHtml(t.id)}">×</button></td>` : ""}
+      </tr>`).join("")}</tbody></table></div>`;
+    }
+    function renderDashboard() {
+      const period = document.getElementById("dashboard-period").value;
+      const selected = data.transactions.filter(t => inPeriod(t, period));
+      const selectedTransports = data.transports.filter(trip => inPeriod(trip, period));
+      const selectedProductions = data.productions.filter(batch => inPeriod(batch, period));
+      const t = totals(selected, selectedTransports, selectedProductions);
+      const cards = [
+        ["Sales revenue", money(t.sales), "↗", "Income from recorded sales"],
+        ["Gross profit", money(t.grossProfit), "◈", `Sales less cost of goods sold${t.unknownCostSales ? ` · ${t.unknownCostSales} sale cost${t.unknownCostSales === 1 ? "" : "s"} unknown` : ""}`],
+        ["Operating expenses", money(t.expenses), "↘", "Includes transport costs, not capitalized production"],
+        ["Net profit / loss", money(t.netProfit), "∑", "Sales − COGS − expenses + other income"]
+      ];
+      document.getElementById("dashboard-metrics").innerHTML = cards.map(([label,value,icon,foot]) => `<div class="metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${escapeHtml(foot)}</div></div>`).join("");
+      const balances=accountBalanceSummary();
+      document.getElementById("cash-position").textContent = money(balances.cashPosition);
+      document.getElementById("cash-position-note").textContent = `As at ${displayDate(balances.asOfDate)} · M-Pesa included with cash`;
+      renderChart(selected, selectedTransports, selectedProductions);
+      document.getElementById("recent-transactions").innerHTML = renderTable([...data.transactions].sort((a,b) => b.date.localeCompare(a.date) || String(b.createdAt).localeCompare(String(a.createdAt))).slice(0,5), { showActions: false, emptyTitle: "Your ledger is ready", emptyText: "Start by recording a sale, purchase or expense." });
+    }
+    function renderChart(source, transportSource = [], productionSource = []) {
+      const now = new Date();
+      const months = [];
+      for (let i=5;i>=0;i--) {
+        const date = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        const key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+        months.push({ key, label: date.toLocaleDateString("en",{month:"short"}) });
+      }
+      const buckets = months.map(m => {
+        const entries = source.filter(t => t.date.slice(0,7) === m.key);
+        const income = entries.reduce((sum,t) => sum + (t.type === "sale" || t.type === "income" ? Number(t.amount)||0 : 0),0);
+        const transactionExpenses = entries.reduce((sum,t) => sum + (t.type === "expense" || t.type === "purchase" ? Number(t.amount)||0 : 0),0);
+        const tripExpenses = transportSource.filter(trip=>String(trip.departure).slice(0,7)===m.key).reduce((sum,trip)=>sum+(Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0),0);
+        const productionExpenses = productionSource.filter(batch=>batch.date.slice(0,7)===m.key).reduce((sum,batch)=>sum+(Number(batch.additionalCosts)||0),0);
+        const expense = transactionExpenses + tripExpenses + productionExpenses;
+        return { ...m, income, expense };
+      });
+      const max = Math.max(1,...buckets.flatMap(b => [b.income,b.expense]));
+      document.getElementById("activity-chart").innerHTML = source.length || transportSource.length || productionSource.length
+        ? `<div class="chart">${buckets.map(b => `<div class="chart-month"><div class="bar-pair"><div class="bar" title="Income: ${money(b.income)}" style="height:${Math.max(2,b.income/max*112)}px"></div><div class="bar expense" title="Spending: ${money(b.expense)}" style="height:${Math.max(2,b.expense/max*112)}px"></div></div><small>${b.label}</small></div>`).join("")}</div>`
+        : `<div class="chart-empty">Add your first transaction to see monthly activity.</div>`;
+    }
+    function transactionAccountLabel(transaction) {
+      return String(transaction.description || getItem(transaction.itemId)?.name || "Unassigned");
+    }
+    function renderTransactionExportOptions() {
+      const select = document.getElementById("transaction-account-select");
+      const current = select.value;
+      const accounts = [...new Set(data.transactions.map(transactionAccountLabel))].sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:"base"}));
+      select.innerHTML = `<option value="">Select an account</option>${accounts.map(account=>`<option value="${escapeHtml(account)}">${escapeHtml(account)}</option>`).join("")}`;
+      if (accounts.includes(current)) select.value = current;
+      select.disabled = accounts.length === 0;
+      document.getElementById("export-account-csv").disabled = !select.value;
+      document.getElementById("print-account-records").disabled = !select.value;
+      document.getElementById("export-all-transactions").disabled = data.transactions.length === 0;
+      document.getElementById("print-all-transactions").disabled = data.transactions.length === 0;
+    }
+    function updateRecordSelectionButtons(selectId, buttonIds) {
+      const selected = Boolean(document.getElementById(selectId).value);
+      for (const id of buttonIds) document.getElementById(id).disabled = !selected;
+    }
+    function populateRecordSelector(selectId, records, placeholder, getLabel, selectedButtonIds, allButtonIds) {
+      const select = document.getElementById(selectId);
+      const current = select.value;
+      select.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>${records.map(record=>`<option value="${escapeHtml(record.id)}">${escapeHtml(getLabel(record))}</option>`).join("")}`;
+      if (records.some(record=>String(record.id)===current)) select.value = current;
+      select.disabled = records.length === 0;
+      updateRecordSelectionButtons(selectId, selectedButtonIds);
+      for (const id of allButtonIds) document.getElementById(id).disabled = records.length === 0;
+    }
+    function renderTransactions() {
+      const filter = document.getElementById("transaction-filter").value;
+      const search = document.getElementById("transaction-search").value.trim().toLowerCase();
+      const visible = data.transactions.filter(t => (filter === "all" || t.type === filter) && (!search || [t.number,t.party,t.description,t.type,t.payment].join(" ").toLowerCase().includes(search)));
+      const t = totals();
+      document.getElementById("transaction-metrics").innerHTML = [
+        ["Total transactions", String(data.transactions.length), "▤", "All recorded entries"],
+        ["Sales", money(t.sales), "↗", "Recorded sales"],
+        ["Purchases", money(data.transactions.filter(x=>x.type==="purchase").reduce((s,x)=>s+Number(x.amount||0),0)), "▦", "Recorded stock purchases"],
+        ["Other income", money(t.otherIncome), "＋", "Income outside sales"]
+      ].map(([label,value,icon,foot]) => `<div class="metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${foot}</div></div>`).join("");
+      renderTransactionExportOptions();
+      document.getElementById("transactions-table").innerHTML = renderTable(visible, { emptyTitle: visible.length ? "" : (search || filter !== "all" ? "No matching transactions" : "No transactions recorded"), emptyText: search || filter !== "all" ? "Try another search or filter." : "Use “Add transaction” to record your first entry." });
+    }
+    function renderInventory() {
+      const stock = currentStock();
+      const search = document.getElementById("inventory-search").value.trim().toLowerCase();
+      const visible = stock.filter(row => row.item.name.toLowerCase().includes(search));
+      const knownValue = stock.reduce((sum,row) => sum + (row.value ?? 0),0);
+      const unknownItems = stock.filter(row=>row.unknownQuantity > 0).length;
+      document.getElementById("inventory-metrics").innerHTML = [
+        ["Stock items", String(data.items.length), "▦", "Unique inventory records"],
+        ["Total units", fmt(stock.reduce((sum,row)=>sum+row.quantity,0)), "◫", "Units are shown in each item's unit"],
+        ["Estimated stock value", unknownItems ? `${money(knownValue)}+` : money(knownValue), "◈", unknownItems ? `${unknownItems} item${unknownItems===1?"":"s"} need cost information` : "Based on recorded average costs"]
+      ].map(([label,value,icon,foot]) => `<div class="metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${foot}</div></div>`).join("");
+      populateRecordSelector("inventory-record-select",data.items,"Select an item",item=>item.name,["download-inventory-item","print-inventory-item"],["download-all-inventory","print-all-inventory"]);
+      document.getElementById("inventory-grid").innerHTML = visible.length ? visible.map(row => `<article class="stock-card">
+        <div class="stock-card-top"><span class="type-badge">In stock</span><button class="quiet" data-edit-item="${escapeHtml(row.item.id)}">Edit item</button></div>
+        <div class="stock-initial">Opening: ${fmt(row.item.openingQuantity)} ${escapeHtml(row.item.unit)}</div>
+        <div class="stock-name">${escapeHtml(row.item.name)}</div>
+        <div class="stock-qty ${row.quantity <= 0 ? "stock-alert" : ""}">${fmt(row.quantity)} <small>${escapeHtml(row.item.unit)}</small></div>
+        <div class="stock-cost">${row.knownQuantity > 0 && row.averageCost !== null ? `Known stock avg. cost ${money(row.averageCost)} / ${escapeHtml(row.item.unit)} · Known value ${money(row.value)}${row.unknownQuantity > 0 ? ` · ${fmt(row.unknownQuantity)} opening units uncosted` : ""}` : row.unknownQuantity > 0 ? `${fmt(row.unknownQuantity)} opening units uncosted · stock value unknown` : "No stock cost recorded"}</div>
+      </article>`).join("") : `<div class="empty-state" style="grid-column:1/-1"><b>No matching stock items</b>Add an item or clear your search.</div>`;
+    }
+    function renderTransport() {
+      const search = document.getElementById("transport-search").value.trim().toLowerCase();
+      const visible = data.transports.filter(trip => [trip.number,trip.load,trip.carrier,trip.additionalCostDetails].join(" ").toLowerCase().includes(search));
+      const fuel = data.transports.reduce((sum,trip)=>sum+(Number(trip.fuelCost)||0),0);
+      const additional = data.transports.reduce((sum,trip)=>sum+(Number(trip.additionalCosts)||0),0);
+      const loadValue = data.transports.reduce((sum,trip)=>sum+(Number(trip.loadValue)||0),0);
+      document.getElementById("transport-metrics").innerHTML = [
+        ["Trips recorded", String(data.transports.length), "⇢", "Transport and export journeys"],
+        ["Value of loads", money(loadValue), "▤", "Memo value of goods carried"],
+        ["Fuel costs", money(fuel), "⛽", "Included in profit & loss"],
+        ["Additional trip costs", money(additional), "＋", "Included in profit & loss"]
+      ].map(([label,value,icon,foot]) => `<div class="metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${foot}</div></div>`).join("");
+      populateRecordSelector("transport-record-select",data.transports,"Select a trip",trip=>`${trip.number} · ${trip.load} · ${trip.carrier}`,["download-transport-trip","print-transport-trip"],["print-all-transport"]);
+      const rows = [...visible].sort((a,b)=>b.departure.localeCompare(a.departure));
+      document.getElementById("transport-table").innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Departure</th><th>Trip / load</th><th>Carried by</th><th>Arrival</th><th>Distance</th><th>Load value</th><th>Trip costs</th><th>Actions</th></tr></thead><tbody>${rows.map(trip=>{
+        const tripCost=(Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0);
+        return `<tr>
+          <td>${displayDateTime(trip.departure)}</td>
+          <td><strong>${escapeHtml(trip.number)}</strong><div class="muted" style="font-size:9px;margin-top:3px">${escapeHtml(trip.load)}</div></td>
+          <td>${escapeHtml(trip.carrier)}</td>
+          <td>${displayDateTime(trip.arrival)}</td>
+          <td>${fmt(trip.mileage)} ${escapeHtml(trip.mileageUnit)}</td>
+          <td class="amount">${money(trip.loadValue)}</td>
+          <td class="amount">${money(tripCost)}</td>
+          <td><button class="quiet" data-edit-transport="${escapeHtml(trip.id)}">Edit</button> <button class="quiet" data-print-transport="${escapeHtml(trip.id)}">Print</button> <button class="icon-button" title="Delete transport record" aria-label="Delete transport record" data-delete-transport="${escapeHtml(trip.id)}">×</button></td>
+        </tr>`;
+      }).join("")}</tbody></table></div>` : `<div class="empty-state"><b>${search?"No matching transport records":"No trips recorded yet"}</b>${search?"Try another search.":"Use “Record a trip” to create a transport or export dispatch record."}</div>`;
+    }
+    function renderProduction() {
+      const ledger = inventoryLedger();
+      const addedValue = data.productions.reduce((sum,batch)=>sum+(ledger.productionCosts.get(batch.id)?.totalCost || 0),0);
+      const additionalCosts = data.productions.reduce((sum,batch)=>sum+(Number(batch.additionalCosts)||0),0);
+      document.getElementById("production-metrics").innerHTML = [
+        ["Batches recorded", String(data.productions.length), "⚙", "Production records"],
+        ["Finished-goods cost added", money(addedValue), "◈", "Material and additional production cost"],
+        ["Additional production costs", money(additionalCosts), "＋", "Capitalized into finished-goods cost"]
+      ].map(([label,value,icon,foot]) => `<div class="metric"><div class="metric-top">${label}<span class="metric-icon">${icon}</span></div><div class="metric-value">${value}</div><div class="metric-foot">${foot}</div></div>`).join("");
+      populateRecordSelector("production-record-select",data.productions,"Select a batch",batch=>`${batch.number} · ${displayDate(batch.date)} · ${getItem(batch.outputItemId)?.name||"Unknown item"}`,["download-production-batch","print-production-batch"],["download-all-production","print-all-production"]);
+      const rows = [...data.productions].sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt)));
+      document.getElementById("production-table").innerHTML = rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date / batch</th><th>Finished goods</th><th>Raw materials used</th><th>Additional cost</th><th>Batch cost / unit</th><th>Actions</th></tr></thead><tbody>${rows.map(batch=>{
+        const item = getItem(batch.outputItemId);
+        const cost = ledger.productionCosts.get(batch.id);
+        const materialText = (batch.materials||[]).map(line=>`${escapeHtml(getItem(line.itemId)?.name||"Unknown item")} · ${fmt(line.quantity)} ${escapeHtml(getItem(line.itemId)?.unit||"")}`).join("<br>");
+        return `<tr>
+          <td><strong>${escapeHtml(batch.number)}</strong><div class="muted" style="font-size:9px;margin-top:3px">${displayDate(batch.date)}</div></td>
+          <td><strong>${escapeHtml(item?.name||"Unknown item")}</strong><div class="muted" style="font-size:9px;margin-top:3px">${fmt(batch.outputQuantity)} ${escapeHtml(item?.unit||"")}</div></td>
+          <td>${materialText||"—"}</td>
+          <td class="amount">${money(batch.additionalCosts)}</td>
+          <td class="amount">${cost?.unknown?"Cost unknown":`${money(cost?.totalCost||0)} · ${money(cost?.unitCost||0)} / ${escapeHtml(item?.unit||"unit")}`}</td>
+          <td><button class="quiet" data-edit-production="${escapeHtml(batch.id)}">Edit</button> <button class="quiet" data-print-production="${escapeHtml(batch.id)}">Print</button> <button class="icon-button" title="Delete production batch" aria-label="Delete production batch" data-delete-production="${escapeHtml(batch.id)}">×</button></td>
+        </tr>`;
+      }).join("")}</tbody></table></div>` : `<div class="empty-state"><b>No production recorded yet</b>Record a batch to convert raw-material stock into finished goods.</div>`;
+    }
+    function renderDocuments() {
+      const t = totals();
+      const productionLedger = inventoryLedger();
+      const margin = t.sales ? `${fmt(t.grossProfit/t.sales*100,1)}%` : "—";
+      document.getElementById("profit-loss-report").innerHTML = `<h3>${escapeHtml(data.business.name || "My business")} · Profit &amp; loss</h3><p>All recorded transactions, production batches and transport trips through ${displayDate(todayIso())} · KES</p>
+        <div class="report-line"><span>Sales revenue</span><strong>${money(t.sales)}</strong></div>
+        <div class="report-line"><span>Less: cost of goods sold</span><strong>${money(t.cogs)}${t.unknownCostSales ? " *" : ""}</strong></div>
+        <div class="report-line total"><span>Gross profit${t.sales ? ` · ${margin} margin` : ""}</span><strong>${money(t.grossProfit)}</strong></div>
+        <div class="report-line"><span>Other income</span><strong>${money(t.otherIncome)}</strong></div>
+        <div class="report-line"><span>Recorded operating expenses</span><strong>${money(t.recordedExpenses)}</strong></div>
+        <div class="report-line"><span>Transport fuel &amp; additional costs</span><strong>${money(t.transportExpenses)}</strong></div>
+        <div class="report-line total"><span>Net profit / (loss)</span><strong>${money(t.netProfit)}</strong></div>
+        <p class="muted" style="font-size:9px;margin:12px 0 0">Production material and additional costs are included in finished-goods inventory, then charged to cost of goods sold as those goods are sold.</p>
+        ${t.unknownCostSales ? `<p class="muted" style="font-size:9px;margin:12px 0 0">* ${t.unknownCostSales} sale${t.unknownCostSales===1?" has":"s have"} no known stock cost, so gross and net profit may be overstated until purchase costs are recorded.</p>` : ""}
+        <p class="muted" style="font-size:9px;margin:14px 0 0">Cash receipts: ${money(t.cashIn)} · Cash paid: ${money(t.cashOut)} · Net cash movement: ${money(t.cash)}. Credit transactions are excluded from cash movement. Cash paid includes production additional costs; load values are memo amounts and are not counted as income.</p>`;
+      const rows = [...data.transactions].sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt)));
+      document.getElementById("document-list").innerHTML = rows.length ? rows.map(t=>`<div class="document-row"><div class="doc-icon">${t.type==="sale"?"▤":t.type==="purchase"?"▦":"◉"}</div><div class="doc-info"><strong>${escapeHtml(typeLabel(t.type))} · ${escapeHtml(t.number)}</strong><small>${displayDate(t.date)} · ${escapeHtml(t.party || t.description || "No party entered")}</small></div><div class="doc-amount">${money(t.amount)}</div><button class="quiet" data-print-transaction="${escapeHtml(t.id)}">Print</button></div>`).join("") : `<div class="empty-state"><b>No documents yet</b>Record a transaction and its printable business document will appear here.</div>`;
+      const batches = [...data.productions].sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt)));
+      document.getElementById("production-document-list").innerHTML = batches.length ? batches.map(batch=>`<div class="document-row"><div class="doc-icon">⚙</div><div class="doc-info"><strong>Production batch · ${escapeHtml(batch.number)}</strong><small>${displayDate(batch.date)} · ${escapeHtml(getItem(batch.outputItemId)?.name||"Unknown item")} · ${fmt(batch.outputQuantity)} produced</small></div><div class="doc-amount">${money(productionLedger.productionCosts.get(batch.id)?.totalCost||0)}</div><button class="quiet" data-print-production="${escapeHtml(batch.id)}">Print</button></div>`).join("") : `<div class="empty-state"><b>No production sheets yet</b>Record a production batch and its costing sheet will appear here.</div>`;
+    }
+    function greetingForHour(hour) {
+      return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    }
+    function dashboardGreeting() {
+      const hour = Number(new Intl.DateTimeFormat("en-KE", { timeZone:"Africa/Nairobi", hour:"numeric", hourCycle:"h23" }).format(new Date()));
+      return greetingForHour(hour);
+    }
+    function refreshDashboardGreeting() {
+      if (activePage === "dashboard") document.getElementById("page-title").textContent = dashboardGreeting();
+    }
+    function renderAll() {
+      refreshDashboardGreeting();
+      document.getElementById("business-name-side").textContent = data.business.name || "My business";
+      document.getElementById("business-avatar").textContent = (data.business.name || "B").trim().charAt(0).toUpperCase();
+      document.getElementById("today-pill").textContent = new Date().toLocaleDateString("en-KE", { weekday:"short", day:"numeric", month:"short", year:"numeric" });
+      const syncSummary = document.getElementById("excel-sync-summary");
+      if (syncSummary) {
+        if (!data.syncBase) syncSummary.textContent = "Excel has not been synced yet. Click Sync Excel to send the opening inventory.";
+        else if (!recordsEqual(syncSnapshot(), data.syncBase)) syncSummary.textContent = "This app has changes waiting to sync. Click Sync Excel to update the workbook.";
+        else syncSummary.textContent = `Last successful sync: ${new Date(data.lastSyncedAt).toLocaleString()}. Click Sync Excel to check for workbook edits.`;
+      }
+      renderDashboard(); renderTransactions(); renderInventory(); renderProduction(); renderTransport(); renderOpeningBalances(); renderDocuments();
+    }
+    function navigate(page) {
+      activePage = page;
+      document.querySelectorAll(".nav button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
+      document.querySelectorAll(".section").forEach(section => section.classList.toggle("active", section.id === `page-${page}`));
+      const titles = {
+        dashboard: [dashboardGreeting(), "A clear view of how your business is doing."],
+        transactions: ["Your transactions", "A reliable record of every shilling in and out."],
+        inventory: ["Stock that makes sense", "See what you have on hand and what it cost."],
+        production: ["Production, accounted for", "Convert raw materials into finished goods with tracked costs."],
+        transport: ["Transport & export", "Loads, carriers, trip costs and dispatch paperwork."],
+        documents: ["Business paperwork, ready", "Reports and printable documents generated from your ledger."]
+      };
+      document.getElementById("page-title").textContent = titles[page][0];
+      document.getElementById("page-subtitle").textContent = titles[page][1];
+      document.getElementById("sidebar").classList.remove("open");
+      window.scrollTo({ top:0, behavior:"smooth" });
+    }
+    function showModal(title, subtitle, body) {
+      document.getElementById("modal").innerHTML = `<div class="modal-head"><div><h2 id="modal-title">${escapeHtml(title)}</h2><p>${escapeHtml(subtitle)}</p></div><button class="icon-button" id="close-modal" aria-label="Close dialog">×</button></div><div class="modal-body">${body}</div>`;
+      document.getElementById("modal-backdrop").classList.add("open");
+      document.getElementById("close-modal").addEventListener("click", closeModal);
+      document.getElementById("modal-backdrop").onclick = event => { if (event.target.id === "modal-backdrop") closeModal(); };
+    }
+    function closeModal() { document.getElementById("modal-backdrop").classList.remove("open"); }
+    function openTransactionModal(defaultType = "sale", editId = "") {
+      const existing = data.transactions.find(transaction=>transaction.id===editId) || null;
+      const type = existing ? existing.type : (["sale","purchase","expense","income","customer_receipt","supplier_payment","loan_received","loan_repayment","capital_introduced","capital_withdrawal"].includes(defaultType) ? defaultType : "sale");
+      const products = data.items.map(item=>`<option value="${escapeHtml(item.id)}" ${existing?.itemId===item.id?"selected":""}>${escapeHtml(item.name)} (${escapeHtml(item.unit)})</option>`).join("");
+      const isStock = type === "sale" || type === "purchase";
+      const movementTypes=["customer_receipt","supplier_payment","loan_received","loan_repayment","capital_introduced","capital_withdrawal"];
+      const transactionHints={
+        sale:"A sale increases income and reduces stock. Profit uses the item's average recorded cost.",
+        purchase:"A purchase increases stock; it affects profit only when that stock is sold.",
+        expense:"An operating expense reduces net profit.",
+        income:"Other income increases net profit.",
+        customer_receipt:"A receipt reduces the customer's amount owing. It is not new sales income.",
+        supplier_payment:"A payment reduces the supplier balance. It is not a new expense.",
+        loan_received:"A loan increases the loan balance and cash/bank. It is not income.",
+        loan_repayment:"A repayment reduces the loan principal and cash/bank. Record any interest separately as an expense.",
+        capital_introduced:"Capital introduced increases the capital balance and cash/bank. It is not income.",
+        capital_withdrawal:"An owner's withdrawal reduces capital and cash/bank. It is not an operating expense."
+      };
+      const body = `<form id="transaction-form">
+        <div class="form-grid">
+          <div class="form-group"><label for="entry-type">Transaction type</label><select class="field-control" id="entry-type" name="type">
+            ${["sale","purchase","expense","income","customer_receipt","supplier_payment","loan_received","loan_repayment","capital_introduced","capital_withdrawal"].map(value=>`<option value="${value}" ${type===value?"selected":""}>${escapeHtml(typeLabel(value))}</option>`).join("")}
+          </select></div>
+          <div class="form-group"><label for="entry-date">Date</label><input class="field-control" id="entry-date" name="date" type="date" value="${escapeHtml(existing?.date || todayIso())}" required></div>
+          <div class="form-group ${isStock?"":"full"}"><label for="entry-party" id="party-label">${type==="sale"?"Sold to (customer)":type==="purchase"?"Purchased from (supplier)":type==="customer_receipt"?"Received from (customer)":type==="supplier_payment"?"Paid to (supplier)":type.startsWith("loan_")?"Lender / loan account":type.startsWith("capital_")?"Owner / capital account":"Payee / source"}</label><input class="field-control" id="entry-party" name="party" maxlength="100" ${isStock||movementTypes.includes(type)?"required":""} placeholder="${isStock||movementTypes.includes(type)?"Enter the account name":"Optional"}" value="${escapeHtml(existing?.party || "")}"><span class="help-text" id="party-help">${isStock||movementTypes.includes(type)?"Use the same account name as its opening balance.":"Optional for expenses and other income."}</span></div>
+          <div class="form-group full" id="item-group" ${isStock?"":"hidden"}><label for="entry-item">Stock item</label><select class="field-control" id="entry-item" name="itemId"><option value="">Select an item</option>${products}</select></div>
+          <div class="form-group" id="quantity-group" ${isStock?"":"hidden"}><label for="entry-quantity">Quantity</label><input class="field-control" id="entry-quantity" name="quantity" type="number" step="any" min="0.001" placeholder="e.g. 2" value="${existing?.quantity || ""}"></div>
+          <div class="form-group" id="unit-price-group" ${isStock?"":"hidden"}><label for="entry-unit-price" id="unit-price-label">${type==="sale"?"Selling price per unit":"Purchase price per unit"} (KES)</label><input class="field-control" id="entry-unit-price" name="unitPrice" type="number" step="0.01" min="0.01" placeholder="0.00" value="${existing?.unitPrice || ""}"></div>
+          <div class="form-group full" id="description-group" ${isStock?"hidden":""}><label for="entry-description">Description / account</label><input class="field-control" id="entry-description" name="description" maxlength="100" placeholder="${type==="expense"?"e.g. Transport, rent, supplies":type.startsWith("loan_")?"e.g. Principal repayment":type.startsWith("capital_")?"e.g. Owner's capital":"e.g. Interest, refund"}" value="${escapeHtml(existing?.description || "")}" ${isStock?"":"required"}></div>
+          <div class="form-group"><label for="entry-payment">Payment method</label><select class="field-control" id="entry-payment" name="payment"><option ${existing?.payment==="Cash"?"selected":""}>Cash</option><option ${existing?.payment==="Bank"?"selected":""}>Bank</option><option ${existing?.payment==="M-Pesa"?"selected":""}>M-Pesa</option><option ${existing?.payment==="Credit"?"selected":""}>Credit</option></select></div>
+          <div class="form-group"><label for="entry-reference">Reference (optional)</label><input class="field-control" id="entry-reference" name="reference" maxlength="50" placeholder="Receipt, invoice or transfer ref." value="${escapeHtml(existing?.reference || "")}"></div>
+          <div class="form-group full" id="amount-group" ${isStock?"hidden":""}><label for="entry-amount">Amount (KES)</label><input class="field-control" id="entry-amount" name="amount" type="number" step="0.01" min="0.01" placeholder="0.00" value="${existing?.amount || ""}" ${isStock?"":"required"}></div>
+          <div class="form-group full"><label for="entry-notes">Notes (optional)</label><textarea class="field-control" id="entry-notes" name="notes" maxlength="300" placeholder="Any extra details to keep with this record">${escapeHtml(existing?.notes || "")}</textarea></div>
+          <div class="form-group full" id="amount-preview-group" ${isStock?"":"hidden"}><div class="amount-preview"><span>Total transaction value</span><strong id="transaction-preview">KES 0</strong></div></div>
+          <div class="form-group full"><div class="notice" id="transaction-hint">${escapeHtml(transactionHints[type])}</div></div>
+        </div>
+        <div class="modal-actions"><button type="button" class="quiet" id="cancel-transaction">Cancel</button><button type="submit" class="primary">${existing?"Save changes":"Save transaction"}</button></div>
+      </form>`;
+      showModal(existing ? "Edit transaction" : "Add a transaction", existing ? `${existing.number} · Changes will sync to Excel.` : "Amounts are recorded in Kenyan shillings (KES).", body);
+      const form = document.getElementById("transaction-form");
+      const syncType = () => {
+        const current = form.elements.type.value, stock = current === "sale" || current === "purchase", isMovement=movementTypes.includes(current);
+        const partyInput=document.getElementById("entry-party");
+        const labels={sale:"Sold to (customer)",purchase:"Purchased from (supplier)",customer_receipt:"Received from (customer)",supplier_payment:"Paid to (supplier)",loan_received:"Lender / loan account",loan_repayment:"Lender / loan account",capital_introduced:"Owner / capital account",capital_withdrawal:"Owner / capital account"};
+        document.getElementById("party-label").textContent=labels[current]||"Payee / source";
+        document.getElementById("party-help").textContent=stock||isMovement?"Use the same account name as its opening balance.":"Optional for expenses and other income.";
+        partyInput.placeholder=stock||isMovement?"Enter the account name":"Optional";
+        partyInput.required=stock||isMovement;
+        document.getElementById("unit-price-label").textContent = `${current==="sale"?"Selling price per unit":"Purchase price per unit"} (KES)`;
+        document.getElementById("item-group").hidden = !stock;
+        document.getElementById("quantity-group").hidden = !stock;
+        document.getElementById("unit-price-group").hidden = !stock;
+        document.getElementById("description-group").hidden = stock;
+        document.getElementById("amount-group").hidden = stock;
+        document.getElementById("amount-preview-group").hidden = !stock;
+        form.elements.quantity.required = stock;
+        form.elements.itemId.required = stock;
+        form.elements.unitPrice.required = stock;
+        form.elements.description.required = !stock;
+        document.getElementById("transaction-hint").textContent=transactionHints[current];
+        const creditOption=[...form.elements.payment.options].find(option=>option.value==="Credit");
+        creditOption.disabled=isMovement;
+        if(isMovement&&form.elements.payment.value==="Credit") form.elements.payment.value="Cash";
+        updatePreview();
+      };
+      const updatePreview = () => {
+        const q = Number(form.elements.quantity.value)||0, price=Number(form.elements.unitPrice.value)||0;
+        document.getElementById("transaction-preview").textContent = money(q*price);
+      };
+      form.elements.type.addEventListener("change", syncType);
+      form.elements.quantity.addEventListener("input", updatePreview);
+      form.elements.unitPrice.addEventListener("input", updatePreview);
+      syncType();
+      updatePreview();
+      document.getElementById("cancel-transaction").addEventListener("click", closeModal);
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const f = new FormData(form), selectedType = f.get("type"), item = selectedType === "sale" || selectedType === "purchase" ? getItem(f.get("itemId")) : null;
+        const quantity = Number(f.get("quantity")) || 0, unitPrice = Number(f.get("unitPrice")) || 0;
+        const amount = item ? quantity * unitPrice : Number(f.get("amount")) || 0;
+        if (!f.get("date") || amount <= 0) { notify("Enter a date and a positive transaction amount."); return; }
+        if ((selectedType==="sale" || selectedType==="purchase" || movementTypes.includes(selectedType)) && !String(f.get("party")||"").trim()) { notify("Enter the customer, supplier, lender or capital account name."); return; }
+        if ((selectedType==="sale" || selectedType==="purchase") && (!item || quantity<=0 || unitPrice<=0)) { notify("Select an item and enter a positive quantity and unit price."); return; }
+        if (movementTypes.includes(selectedType) && f.get("payment")==="Credit") { notify("Choose Cash, Bank or M-Pesa for this account movement."); return; }
+        const transaction = {
+          id: existing?.id || uniqueId("txn"), number: existing?.number || nextTransactionNumber(),
+          date: f.get("date"), type: selectedType, party: String(f.get("party")||"").trim(),
+          description: item ? item.name : String(f.get("description")||"").trim(),
+          itemId: item?.id || "", quantity: item ? quantity : 0, unit: item?.unit || "",
+          unitPrice: item ? unitPrice : 0, amount, payment: f.get("payment"),
+          reference: String(f.get("reference")||"").trim(), notes: String(f.get("notes")||"").trim(), createdAt: existing?.createdAt || new Date().toISOString()
+        };
+        const existingIndex = existing ? data.transactions.findIndex(row=>row.id===existing.id) : -1;
+        if (existingIndex >= 0) data.transactions[existingIndex] = transaction;
+        else data.transactions.push(transaction);
+        const stockIssue = inventoryLedger().issues[0];
+        if (stockIssue) {
+          if (existingIndex >= 0) data.transactions[existingIndex] = existing;
+          else data.transactions.pop();
+          if (stockIssue.type === "unknown-cost") notify(`The opening cost for ${stockIssue.item.name} is unknown. Enter a reliable opening unit cost or record a priced purchase before using it in production.`);
+          else if (stockIssue.type === "stock") notify(`This date would leave too little ${stockIssue.item.name} for a sale or production batch. Check transaction dates and available stock.`);
+          else notify("This change conflicts with the inventory history. Check stock quantities and production records.");
+          return;
+        }
+        saveData(); closeModal(); renderAll(); notify(existing ? "Changes saved locally. Sync with Excel to update the workbook." : "Transaction saved locally. Sync with Excel to update the workbook.");
+      });
+    }
+    function openAddItemModal(editId = "") {
+      const existing = data.items.find(item=>item.id===editId) || null;
+      showModal(existing ? "Edit inventory item" : "Add a stock item", existing ? "Changes will sync to the Excel inventory tab." : "Add products or materials you want to track.", `<form id="item-form"><div class="form-grid">
+        <div class="form-group full"><label for="item-name">Item name</label><input class="field-control" id="item-name" name="name" maxlength="80" required placeholder="e.g. Leather" value="${escapeHtml(existing?.name || "")}"></div>
+        <div class="form-group"><label for="item-unit">Unit</label><input class="field-control" id="item-unit" name="unit" maxlength="24" required placeholder="e.g. pieces, sheets" value="${escapeHtml(existing?.unit || "")}"></div>
+        <div class="form-group"><label for="item-opening">Opening quantity</label><input class="field-control" id="item-opening" name="quantity" type="number" min="0" step="any" value="${existing?.openingQuantity ?? 0}" required></div>
+        <div class="form-group full"><div class="notice">Opening stock cost is optional. Leave it blank if you do not have a reliable cost; the app will label its value unknown.</div></div>
+        <div class="form-group full"><label for="item-cost">Opening unit cost (KES, optional)</label><input class="field-control" id="item-cost" name="cost" type="number" min="0" step="0.01" placeholder="Leave blank if unknown" value="${existing?.openingCost ?? ""}"></div>
+      </div><div class="modal-actions"><button type="button" class="quiet" id="cancel-item">Cancel</button><button class="primary" type="submit">${existing?"Save changes":"Add item"}</button></div></form>`);
+      document.getElementById("cancel-item").addEventListener("click", closeModal);
+      document.getElementById("item-form").addEventListener("submit", event=>{
+        event.preventDefault();
+        const f=new FormData(event.currentTarget), name=String(f.get("name")).trim(), unit=String(f.get("unit")).trim().toUpperCase(), quantity=Number(f.get("quantity"));
+        if(data.items.some(item=>item.id!==existing?.id && item.name.toLowerCase()===name.toLowerCase())) { notify("An item with that name already exists."); return; }
+        const cost = f.get("cost") === "" ? null : Number(f.get("cost"));
+        const updated = {id:existing?.id || uniqueId("item"),name,unit,quantity,openingQuantity:quantity,openingCost:cost};
+        const index=existing ? data.items.findIndex(item=>item.id===existing.id) : -1;
+        if(index>=0) data.items[index]=updated; else data.items.push(updated);
+        if(hasInvalidInventoryHistory()) {
+          if(index>=0) data.items[index]=existing; else data.items.pop();
+          notify("That opening stock change would make a later sale or production record invalid. Check quantities and production costs.");
+          return;
+        }
+        saveData(); closeModal(); renderAll(); notify(existing ? "Item changes saved locally. Sync with Excel to update the workbook." : "Stock item added locally. Sync with Excel to update the workbook.");
+      });
+    }
+    function openProductionModal(editId = "") {
+      const existing = data.productions.find(batch=>batch.id===editId) || null;
+      const itemOptions = data.items.map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)} (${escapeHtml(item.unit)})</option>`).join("");
+      const outputOptions = data.items.map(item=>`<option value="${escapeHtml(item.id)}" ${existing?.outputItemId===item.id?"selected":""}>${escapeHtml(item.name)} (${escapeHtml(item.unit)})</option>`).join("");
+      const body = `<form id="production-form"><div class="form-grid">
+        <div class="form-group"><label for="production-date">Production date</label><input class="field-control" id="production-date" name="date" type="date" required value="${escapeHtml(existing?.date||todayIso())}"></div>
+        <div class="form-group"><label for="production-output">Finished item</label><select class="field-control" id="production-output" name="outputItemId" required><option value="">Select finished item</option>${outputOptions}</select></div>
+        <div class="form-group"><label for="production-quantity">Finished quantity</label><input class="field-control" id="production-quantity" name="outputQuantity" type="number" step="any" min="0.001" required placeholder="e.g. 10" value="${existing?.outputQuantity??""}"></div>
+        <div class="form-group"><label for="production-costs">Additional production costs (KES)</label><input class="field-control" id="production-costs" name="additionalCosts" type="number" step="0.01" min="0" required value="${existing?.additionalCosts??0}"><span class="help-text">Optional costs such as direct labour or power. Added to inventory cost.</span></div>
+        <div class="form-group"><label for="production-payment">How were additional costs paid?</label><select class="field-control" id="production-payment" name="payment"><option ${!existing||existing.payment==="Cash"?"selected":""}>Cash</option><option ${existing?.payment==="Bank"?"selected":""}>Bank</option><option ${existing?.payment==="M-Pesa"?"selected":""}>M-Pesa</option><option ${existing?.payment==="Credit"?"selected":""}>Credit</option></select></div>
+        <div class="form-group full"><label>Raw materials used</label><div id="production-materials" class="form-grid"></div><button type="button" class="secondary" id="add-production-material" style="justify-self:start;margin-top:8px">＋ Add raw material</button><span class="help-text">Only costed stock can be consumed so finished-goods costs stay reliable.</span></div>
+        <div class="form-group full"><label for="production-notes">Notes (optional)</label><textarea class="field-control" id="production-notes" name="notes" maxlength="300" placeholder="Batch details, operator or quality notes">${escapeHtml(existing?.notes||"")}</textarea></div>
+        <div class="form-group full"><div class="notice">Raw-material cost is calculated using the average cost on the batch date. The batch cost is added to finished-goods stock and recognized in profit &amp; loss when sold.</div></div>
+      </div><div class="modal-actions"><button type="button" class="quiet" id="cancel-production">Cancel</button><button type="submit" class="primary">${existing?"Save changes":"Save batch"}</button></div></form>`;
+      showModal(existing?"Edit production batch":"Record production",existing?`${existing.number} · Changes will sync to Excel.`:"Record the finished goods and raw-material quantities for this batch.",body);
+      const materialsContainer=document.getElementById("production-materials");
+      const addMaterialRow=(material={})=>{
+        const row=document.createElement("div");
+        row.className="production-material-row";
+        row.innerHTML=`<div class="form-group"><label>Raw material</label><select class="field-control" name="materialItemId" required><option value="">Select material</option>${itemOptions}</select></div><div class="form-group"><label>Quantity</label><input class="field-control" name="materialQuantity" type="number" step="any" min="0.001" required placeholder="0" value="${material.quantity??""}"></div><button type="button" class="icon-button" aria-label="Remove raw material">×</button>`;
+        row.querySelector('[name="materialItemId"]').value=material.itemId||"";
+        row.querySelector("button").addEventListener("click",()=>{
+          if(materialsContainer.children.length===1) {
+            row.querySelector('[name="materialItemId"]').value="";
+            row.querySelector('[name="materialQuantity"]').value="";
+          } else row.remove();
+        });
+        materialsContainer.appendChild(row);
+      };
+      const rows=existing?.materials?.length?existing.materials:[{}];
+      rows.forEach(addMaterialRow);
+      document.getElementById("add-production-material").addEventListener("click",()=>addMaterialRow());
+      document.getElementById("cancel-production").addEventListener("click",closeModal);
+      document.getElementById("production-form").addEventListener("submit",event=>{
+        event.preventDefault();
+        const form=event.currentTarget, values=new FormData(form), outputItem=getItem(values.get("outputItemId"));
+        const outputQuantity=Number(values.get("outputQuantity")), additionalCosts=Number(values.get("additionalCosts"));
+        const materials=[...materialsContainer.querySelectorAll(".production-material-row")].map(row=>({
+          itemId:row.querySelector('[name="materialItemId"]').value,
+          quantity:Number(row.querySelector('[name="materialQuantity"]').value)
+        }));
+        if(!values.get("date")||!outputItem||!Number.isFinite(outputQuantity)||outputQuantity<=0) { notify("Select a finished item and enter the date and positive output quantity."); return; }
+        if(!Number.isFinite(additionalCosts)||additionalCosts<0) { notify("Enter valid non-negative additional production costs."); return; }
+        if(!materials.length||materials.some(line=>!line.itemId||!Number.isFinite(line.quantity)||line.quantity<=0)) { notify("Select each raw material and enter a positive quantity."); return; }
+        if(materials.some(line=>line.itemId===outputItem.id)) { notify("The finished item cannot also be listed as a raw material in the same batch."); return; }
+        if(new Set(materials.map(line=>line.itemId)).size!==materials.length) { notify("List each raw material once; combine duplicate quantities."); return; }
+        const batch={
+          id:existing?.id||uniqueId("production"),number:existing?.number||nextProductionNumber(values.get("date")),
+          date:String(values.get("date")),outputItemId:outputItem.id,outputQuantity,materials,
+          additionalCosts,payment:String(values.get("payment")||"Cash"),notes:String(values.get("notes")||"").trim(),
+          createdAt:existing?.createdAt||new Date().toISOString()
+        };
+        const index=existing?data.productions.findIndex(row=>row.id===existing.id):-1;
+        if(index>=0)data.productions[index]=batch;else data.productions.push(batch);
+        const issue=inventoryLedger().issues[0];
+        if(issue) {
+          if(index>=0)data.productions[index]=existing;else data.productions.pop();
+          if(issue.type==="unknown-cost") notify(`The opening cost for ${issue.item.name} is unknown. Enter a reliable opening unit cost or record a priced purchase before using it in production.`);
+          else if(issue.type==="stock") notify(`Not enough ${issue.item.name} is available on that date. Check earlier purchases, sales, production and batch date.`);
+          else notify("This batch conflicts with the inventory history. Check the finished item and material records.");
+          return;
+        }
+        saveData();closeModal();renderAll();notify(existing?"Production batch updated locally. Sync with Excel to update the workbook.":"Production batch saved locally. Sync with Excel to update the workbook.");
+      });
+    }
+    function openTransportModal(editId = "") {
+      const existing = data.transports.find(trip=>trip.id===editId) || null;
+      const body = `<form id="transport-form"><div class="form-grid">
+        <div class="form-group full"><label for="transport-load">Load being carried</label><input class="field-control" id="transport-load" name="load" maxlength="160" required placeholder="Describe the goods or shipment" value="${escapeHtml(existing?.load || "")}"></div>
+        <div class="form-group"><label for="transport-carrier">Carried by</label><input class="field-control" id="transport-carrier" name="carrier" maxlength="100" required placeholder="Driver, carrier or company" value="${escapeHtml(existing?.carrier || "")}"></div>
+        <div class="form-group"><label for="transport-load-value">Cost / value of load (KES)</label><input class="field-control" id="transport-load-value" name="loadValue" type="number" min="0" step="0.01" required value="${existing?.loadValue ?? 0}"><span class="help-text">Recorded as shipment value, not income.</span></div>
+        <div class="form-group"><label for="transport-departure">Departure date &amp; time</label><input class="field-control" id="transport-departure" name="departure" type="datetime-local" required value="${escapeHtml(existing?.departure || localDateTimeNow())}"></div>
+        <div class="form-group"><label for="transport-arrival">Arrival date &amp; time</label><input class="field-control" id="transport-arrival" name="arrival" type="datetime-local" value="${escapeHtml(existing?.arrival || "")}"><span class="help-text">Leave blank while the trip is in progress.</span></div>
+        <div class="form-group"><label for="transport-mileage">Total mileage</label><input class="field-control" id="transport-mileage" name="mileage" type="number" min="0" step="0.1" required value="${existing?.mileage ?? 0}"></div>
+        <div class="form-group"><label for="transport-mileage-unit">Mileage unit</label><select class="field-control" id="transport-mileage-unit" name="mileageUnit"><option value="km" ${!existing || existing.mileageUnit==="km"?"selected":""}>Kilometres (km)</option><option value="miles" ${existing?.mileageUnit==="miles"?"selected":""}>Miles</option></select></div>
+        <div class="form-group"><label for="transport-fuel-cost">Cost of fuel (KES)</label><input class="field-control" id="transport-fuel-cost" name="fuelCost" type="number" min="0" step="0.01" required value="${existing?.fuelCost ?? 0}"></div>
+        <div class="form-group"><label for="transport-additional-costs">Additional costs (KES)</label><input class="field-control" id="transport-additional-costs" name="additionalCosts" type="number" min="0" step="0.01" required value="${existing?.additionalCosts ?? 0}"></div>
+        <div class="form-group full"><label for="transport-cost-details">What were the additional costs? (optional)</label><input class="field-control" id="transport-cost-details" name="additionalCostDetails" maxlength="180" placeholder="e.g. tolls, loading, customs or handling" value="${escapeHtml(existing?.additionalCostDetails || "")}"></div>
+        <div class="form-group"><label for="transport-payment">How were trip costs paid?</label><select class="field-control" id="transport-payment" name="payment"><option ${!existing || existing.payment==="Cash"?"selected":""}>Cash</option><option ${existing?.payment==="Bank"?"selected":""}>Bank</option><option ${existing?.payment==="M-Pesa"?"selected":""}>M-Pesa</option><option ${existing?.payment==="Credit"?"selected":""}>Credit</option></select></div>
+        <div class="form-group full"><label for="transport-notes">Notes (optional)</label><textarea class="field-control" id="transport-notes" name="notes" maxlength="300" placeholder="Any other details about this trip">${escapeHtml(existing?.notes || "")}</textarea></div>
+        <div class="form-group full"><div class="notice">Fuel and additional costs are included in profit &amp; loss. The load value is recorded for dispatch documentation only.</div></div>
+      </div><div class="modal-actions"><button type="button" class="quiet" id="cancel-transport">Cancel</button><button class="primary" type="submit">${existing?"Save changes":"Save trip"}</button></div></form>`;
+      showModal(existing ? "Edit transport trip" : "Record a transport trip", existing ? `${existing.number} · Changes will sync to Excel.` : "Add the shipment details and trip costs.", body);
+      document.getElementById("cancel-transport").addEventListener("click",closeModal);
+      document.getElementById("transport-form").addEventListener("submit",event=>{
+        event.preventDefault();
+        const f=new FormData(event.currentTarget);
+        const departure=String(f.get("departure")||""), arrival=String(f.get("arrival")||"");
+        const mileage=Number(f.get("mileage")), fuelCost=Number(f.get("fuelCost")), additionalCosts=Number(f.get("additionalCosts")), loadValue=Number(f.get("loadValue"));
+        if(arrival && arrival < departure) { notify("Arrival must be after the departure date and time."); return; }
+        if(!Number.isFinite(mileage)||mileage<0||![fuelCost,additionalCosts,loadValue].every(value=>Number.isFinite(value)&&value>=0)) { notify("Enter valid non-negative mileage and KES amounts."); return; }
+        const trip={
+          id:existing?.id||uniqueId("trip"), number:existing?.number||nextTransportNumber(departure),
+          load:String(f.get("load")||"").trim(), carrier:String(f.get("carrier")||"").trim(),
+          departure, arrival, mileage, mileageUnit:String(f.get("mileageUnit")||"km"),
+          fuelCost, additionalCosts, additionalCostDetails:String(f.get("additionalCostDetails")||"").trim(),
+          loadValue, payment:String(f.get("payment")||"Cash"), notes:String(f.get("notes")||"").trim(),
+          createdAt:existing?.createdAt||new Date().toISOString()
+        };
+        const index=existing?data.transports.findIndex(row=>row.id===existing.id):-1;
+        if(index>=0) data.transports[index]=trip; else data.transports.push(trip);
+        saveData();closeModal();renderAll();notify(existing?"Trip changes saved locally. Sync with Excel to update the workbook.":"Trip saved locally. Sync with Excel to update the workbook.");
+      });
+    }
+    function openBusinessModal() {
+      const b=data.business;
+      showModal("Business profile", "These details appear on printed documents.", `<form id="business-form"><div class="business-fields">
+        <div class="form-group full"><label for="business-name">Business name</label><input class="field-control" id="business-name" name="name" required maxlength="100" value="${escapeHtml(b.name)}"></div>
+        <div class="form-group"><label for="business-phone">Phone</label><input class="field-control" id="business-phone" name="phone" maxlength="40" value="${escapeHtml(b.phone)}"></div>
+        <div class="form-group"><label for="business-email">Email</label><input class="field-control" id="business-email" name="email" type="email" maxlength="100" value="${escapeHtml(b.email)}"></div>
+        <div class="form-group"><label for="business-pin">KRA PIN (optional)</label><input class="field-control" id="business-pin" name="pin" maxlength="30" value="${escapeHtml(b.pin)}"></div>
+        <div class="form-group full"><label for="business-address">Business address</label><textarea class="field-control" id="business-address" name="address" maxlength="180">${escapeHtml(b.address)}</textarea></div>
+      </div><div class="modal-actions"><button type="button" class="quiet" id="cancel-business">Cancel</button><button class="primary" type="submit">Save profile</button></div></form>`);
+      document.getElementById("cancel-business").addEventListener("click",closeModal);
+      document.getElementById("business-form").addEventListener("submit",event=>{
+        event.preventDefault(); const f=new FormData(event.currentTarget);
+        data.business={name:String(f.get("name")).trim(),phone:String(f.get("phone")).trim(),email:String(f.get("email")).trim(),pin:String(f.get("pin")).trim(),address:String(f.get("address")).trim()};
+        saveData();closeModal();renderAll();notify("Business profile saved.");
+      });
+    }
+    function openingBalanceRowHtml(account={}) {
+      const options=[["cash","Cash & M-Pesa"],["bank","Bank"],["debtor","Customer owes you"],["creditor","You owe supplier"],["loan","Loan payable"],["capital","Capital"]];
+      const fixedName=account.type==="cash"?"Cash & M-Pesa":account.type==="bank"?"Bank":"";
+      return `<div class="opening-account-row form-grid" style="align-items:end;margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:12px">
+        <div class="form-group"><label>Account type</label><select class="field-control opening-type" required>${options.map(([value,label])=>`<option value="${value}" ${account.type===value?"selected":""}>${label}</option>`).join("")}</select></div>
+        <div class="form-group"><label>Account name</label><input class="field-control opening-name" maxlength="100" value="${escapeHtml(account.name||fixedName)}" placeholder="Customer, supplier, lender or owner"></div>
+        <div class="form-group"><label>Opening balance (KES)</label><input class="field-control opening-amount" type="number" min="0" step="0.01" required value="${account.amount??0}"></div>
+        <button type="button" class="quiet opening-remove">Remove</button>
+        <input type="hidden" class="opening-id" value="${escapeHtml(account.id||"")}">
+      </div>`;
+    }
+    function openOpeningBalancesModal() {
+      const existing=data.openingBalances||{asOfDate:"",accounts:[]};
+      const rows=existing.accounts.length?existing.accounts.map(openingBalanceRowHtml).join(""):openingBalanceRowHtml({type:"cash",name:"Cash & M-Pesa",amount:0});
+      showModal("Set opening balances","Enter balances at the start of the chosen date. These are not income or expenses.",`<form id="opening-balances-form">
+        <div class="form-group"><label for="opening-balance-date">Balances as at (start of day)</label><input class="field-control" id="opening-balance-date" name="asOfDate" type="date" required value="${escapeHtml(existing.asOfDate||todayIso())}"><span class="help-text">Transactions on this date update the carried-down balances.</span></div>
+        <div class="notice" style="margin:12px 0">Enter each debtor, creditor, loan and capital account as a separate row. Cash &amp; M-Pesa and Bank can each have one opening balance.</div>
+        <div id="opening-account-rows">${rows}</div>
+        <button type="button" class="secondary" id="add-opening-account">＋ Add another account</button>
+        <div class="modal-actions"><button type="button" class="quiet" id="cancel-opening-balances">Cancel</button><button type="submit" class="primary">Save opening balances</button></div>
+      </form>`);
+      const container=document.getElementById("opening-account-rows");
+      const bindRow=row=>{
+        const type=row.querySelector(".opening-type"),name=row.querySelector(".opening-name");
+        const syncName=()=>{
+          const previousName=name.value;
+          const fixed=type.value==="cash"?"Cash & M-Pesa":type.value==="bank"?"Bank":"";
+          name.disabled=Boolean(fixed);
+          if(fixed) name.value=fixed;
+          else if(previousName==="Cash & M-Pesa"||previousName==="Bank") name.value="";
+          name.placeholder=fixed||"Customer, supplier, lender or owner";
+        };
+        type.addEventListener("change",syncName);
+        row.querySelector(".opening-remove").addEventListener("click",()=>row.remove());
+        syncName();
+      };
+      container.querySelectorAll(".opening-account-row").forEach(bindRow);
+      document.getElementById("add-opening-account").addEventListener("click",()=>{
+        const wrapper=document.createElement("div");
+        wrapper.innerHTML=openingBalanceRowHtml({type:"debtor",amount:0});
+        const row=wrapper.firstElementChild;
+        container.appendChild(row);bindRow(row);
+      });
+      document.getElementById("cancel-opening-balances").addEventListener("click",closeModal);
+      document.getElementById("opening-balances-form").addEventListener("submit",event=>{
+        event.preventDefault();
+        const accounts=[],keys=new Set();
+        for(const row of container.querySelectorAll(".opening-account-row")){
+          const type=row.querySelector(".opening-type").value;
+          const name=type==="cash"?"Cash & M-Pesa":type==="bank"?"Bank":row.querySelector(".opening-name").value.trim();
+          const amount=Number(row.querySelector(".opening-amount").value);
+          if(!name||!Number.isFinite(amount)||amount<0){notify("Enter an account name and a valid non-negative opening balance for every row.");return;}
+          const key=`${type}:${name.toLocaleLowerCase()}`;
+          if(keys.has(key)){notify(`Only one opening balance is allowed for ${name}.`);return;}
+          keys.add(key);
+          accounts.push({id:row.querySelector(".opening-id").value||uniqueId("opening-balance"),type,name,amount});
+        }
+        data.openingBalances={asOfDate:document.getElementById("opening-balance-date").value,accounts};
+        saveData();closeModal();renderAll();notify("Opening balances saved. Account balances will carry forward from this date.");
+      });
+    }
+    function exportAccountBalancesCsv() {
+      const summary=accountBalanceSummary();
+      const headers=["Account type","Account name","As of date","Balance brought down KES","Movement KES","Balance carried down KES"];
+      const rows=summary.rows.map(row=>[row.label,row.name,summary.asOfDate,row.opening,row.movement,row.closing]);
+      exportCsvFile("ledgerly-account-balances.csv",headers,rows,"Account balances exported as CSV.");
+    }
+    function printAccountBalances() {
+      const summary=accountBalanceSummary();
+      const rows=summary.rows.map(row=>`<tr><td>${escapeHtml(row.label)}</td><td>${escapeHtml(row.name)}</td><td>${money(row.opening)}</td><td>${money(row.movement)}</td><td>${money(row.closing)}</td></tr>`);
+      printLedgerTable("ACCOUNT BALANCES",`Balances brought down at ${displayDate(summary.asOfDate)} and carried down after recorded activity`,["Account type","Account name","Balance b/d (KES)","Movement (KES)","Balance c/d (KES)"],rows,"Opening balances do not affect profit and loss. M-Pesa is included with cash; loan repayments are treated as principal.");
+    }
+    function printableHeader(title, subtitle) {
+      const b=data.business;
+      return `<header><h1>${escapeHtml(b.name||"My business")}</h1>${b.address?`<div>${escapeHtml(b.address).replace(/\n/g,"<br>")}</div>`:""}<div>${[b.phone,b.email,b.pin?`KRA PIN: ${b.pin}`:""].filter(Boolean).map(escapeHtml).join(" · ")}</div><h2>${escapeHtml(title)}</h2><div>${escapeHtml(subtitle)}</div></header>`;
+    }
+    function printTransaction(id) {
+      const t=data.transactions.find(row=>row.id===id); if(!t) return;
+      const titles={sale:t.payment==="Credit"?"INVOICE":"SALES RECEIPT",purchase:"PURCHASE VOUCHER",expense:"EXPENSE VOUCHER",income:"INCOME RECEIPT",customer_receipt:"CUSTOMER RECEIPT",supplier_payment:"SUPPLIER PAYMENT",loan_received:"LOAN RECEIPT",loan_repayment:"LOAN REPAYMENT",capital_introduced:"CAPITAL INTRODUCTION",capital_withdrawal:"CAPITAL WITHDRAWAL"};
+      const title=titles[t.type]||"TRANSACTION VOUCHER";
+      const partyLabels={sale:"Customer",purchase:"Supplier",customer_receipt:"Customer",supplier_payment:"Supplier",loan_received:"Lender / loan account",loan_repayment:"Lender / loan account",capital_introduced:"Owner / capital account",capital_withdrawal:"Owner / capital account"};
+      const partyLabel=partyLabels[t.type]||"Party / account";
+      const details = t.itemId ? `<tr><td>${escapeHtml(t.description)}</td><td>${fmt(t.quantity)} ${escapeHtml(t.unit)}</td><td>${money(t.unitPrice)}</td><td>${money(t.amount)}</td></tr>` : `<tr><td>${escapeHtml(t.description)}</td><td>—</td><td>—</td><td>${money(t.amount)}</td></tr>`;
+      const root=document.getElementById("print-root");
+      root.hidden=false;
+      root.innerHTML=`${printableHeader(title,`${t.number} · ${displayDate(t.date)}`)}<p><strong>${partyLabel}:</strong> ${escapeHtml(t.party||"—")}<br><strong>Payment:</strong> ${escapeHtml(t.payment)}${t.reference?`<br><strong>Reference:</strong> ${escapeHtml(t.reference)}`:""}</p><table><thead><tr><th>Description</th><th>Qty / unit</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>${details}</tbody><tfoot><tr><th colspan="3">Total (KES)</th><th>${money(t.amount)}</th></tr></tfoot></table>${t.notes?`<p><strong>Notes:</strong> ${escapeHtml(t.notes)}</p>`:""}<p style="margin-top:42px">Prepared by: ____________________ &nbsp;&nbsp;&nbsp; Received by: ____________________</p><p style="margin-top:42px;color:#666;font-size:10px">Generated from the business ledger on ${displayDate(todayIso())}.</p>`;
+      window.print();
+      setTimeout(()=>{root.hidden=true;root.innerHTML="";},500);
+    }
+    function printProduction(id) {
+      const batch=data.productions.find(row=>row.id===id); if(!batch) return;
+      const item=getItem(batch.outputItemId), cost=inventoryLedger().productionCosts.get(batch.id);
+      const materialCosts=cost?.materials||[];
+      const materials=(batch.materials||[]).map((line,index)=>{
+        const material=getItem(line.itemId);
+        const lineCost=materialCosts[index]?.unknown?"Unknown":money(materialCosts[index]?.amount||0);
+        return `<tr><td>${escapeHtml(material?.name||"Unknown item")}</td><td>${fmt(line.quantity)} ${escapeHtml(material?.unit||"")}</td><td>${lineCost}</td></tr>`;
+      }).join("");
+      const root=document.getElementById("print-root"); root.hidden=false;
+      root.innerHTML=`${printableHeader("PRODUCTION BATCH SHEET",`${batch.number} · ${displayDate(batch.date)}`)}
+        <table><tbody><tr><th>Finished goods</th><td>${escapeHtml(item?.name||"Unknown item")}</td></tr><tr><th>Quantity produced</th><td>${fmt(batch.outputQuantity)} ${escapeHtml(item?.unit||"")}</td></tr></tbody></table>
+        <h2>Raw materials consumed</h2><table><thead><tr><th>Material</th><th>Quantity</th><th>Material cost (KES)</th></tr></thead><tbody>${materials}</tbody></table>
+        <table><tbody><tr><th>Additional production costs</th><td>${money(batch.additionalCosts)}</td></tr><tr><th>Total batch cost</th><td>${cost?.unknown?"Unknown":money(cost?.totalCost||0)}</td></tr><tr><th>Cost per finished unit</th><td>${cost?.unknown?"Unknown":money(cost?.unitCost||0)}</td></tr><tr><th>Additional-cost payment</th><td>${escapeHtml(batch.payment)}</td></tr></tbody></table>
+        ${batch.notes?`<p><strong>Notes:</strong> ${escapeHtml(batch.notes)}</p>`:""}
+        <p style="margin-top:42px">Prepared by: ____________________ &nbsp;&nbsp;&nbsp; Approved by: ____________________</p>
+        <p style="margin-top:32px;color:#666;font-size:10px">Material costs use the average stock cost on the batch date. Production cost is held in inventory until the finished goods are sold.</p>`;
+      window.print();setTimeout(()=>{root.hidden=true;root.innerHTML="";},500);
+    }
+    function printTransport(id) {
+      const trip=data.transports.find(row=>row.id===id); if(!trip) return;
+      const root=document.getElementById("print-root");
+      root.hidden=false;
+      root.innerHTML=`${printableHeader("TRANSPORT / EXPORT DISPATCH NOTE",`${trip.number} · Departure ${displayDateTime(trip.departure)}`)}
+        <table><tbody>
+          <tr><th>Load carried</th><td>${escapeHtml(trip.load)}</td></tr>
+          <tr><th>Carried by</th><td>${escapeHtml(trip.carrier)}</td></tr>
+          <tr><th>Arrival</th><td>${trip.arrival?displayDateTime(trip.arrival):"In transit"}</td></tr>
+          <tr><th>Total mileage</th><td>${fmt(trip.mileage)} ${escapeHtml(trip.mileageUnit)}</td></tr>
+          <tr><th>Cost / value of load</th><td>${money(trip.loadValue)}</td></tr>
+          <tr><th>Fuel cost</th><td>${money(trip.fuelCost)}</td></tr>
+          <tr><th>Additional costs${trip.additionalCostDetails?` · ${escapeHtml(trip.additionalCostDetails)}`:""}</th><td>${money(trip.additionalCosts)}</td></tr>
+          <tr><th>Trip cost total</th><td>${money((Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0))}</td></tr>
+          <tr><th>Payment method</th><td>${escapeHtml(trip.payment)}</td></tr>
+        </tbody></table>
+        ${trip.notes?`<p><strong>Notes:</strong> ${escapeHtml(trip.notes)}</p>`:""}
+        <p style="margin-top:42px">Prepared by: ____________________ &nbsp;&nbsp;&nbsp; Carried by: ____________________</p>
+        <p style="margin-top:42px;color:#666;font-size:10px">Generated from the business ledger on ${displayDate(todayIso())}. Load value is a dispatch memo amount, not income.</p>`;
+      window.print();
+      setTimeout(()=>{root.hidden=true;root.innerHTML="";},500);
+    }
+    function printReport() {
+      const t=totals(), root=document.getElementById("print-root"); root.hidden=false;
+      root.innerHTML=`${printableHeader("PROFIT & LOSS STATEMENT",`For all transactions, production batches and transport trips recorded through ${displayDate(todayIso())} · KES`)}<table><thead><tr><th>Account</th><th>Amount (KES)</th></tr></thead><tbody>
+      <tr><td>Sales revenue</td><td>${money(t.sales)}</td></tr><tr><td>Less: cost of goods sold</td><td>(${money(t.cogs)})</td></tr><tr><th>Gross profit</th><th>${money(t.grossProfit)}</th></tr>
+      <tr><td>Other income</td><td>${money(t.otherIncome)}</td></tr><tr><td>Recorded operating expenses</td><td>(${money(t.recordedExpenses)})</td></tr><tr><td>Transport fuel &amp; additional costs</td><td>(${money(t.transportExpenses)})</td></tr><tr><th>Net profit / (loss)</th><th>${money(t.netProfit)}</th></tr></tbody></table>
+      <p>Production costs are held in finished-goods inventory and charged to cost of goods sold as the goods are sold. Cash paid includes production additional costs.</p>
+      <p>Cash receipts: ${money(t.cashIn)} · Cash paid: ${money(t.cashOut)} · Net cash movement: ${money(t.cash)}. Credit transactions are excluded from cash movement.</p>
+      ${t.unknownCostSales?`<p>Note: ${t.unknownCostSales} sale(s) have no known inventory cost; profit may be overstated.</p>`:""}<p style="margin-top:32px">Prepared by: ____________________ &nbsp;&nbsp;&nbsp; Date: ____________________</p>`;
+      window.print(); setTimeout(()=>{root.hidden=true;root.innerHTML="";},500);
+    }
+    function printTransactionLedger(transactions, title, subtitle) {
+      if (!transactions.length) { notify("There are no transactions to print."); return; }
+      const byType = new Map();
+      for (const transaction of transactions) byType.set(transaction.type,(byType.get(transaction.type)||0)+(Number(transaction.amount)||0));
+      const rows = [...transactions].sort((a,b)=>b.date.localeCompare(a.date)||String(b.createdAt).localeCompare(String(a.createdAt))).map(transaction=>{
+        const item = transaction.itemId ? `${getItem(transaction.itemId)?.name || transaction.description} · ${fmt(transaction.quantity)} ${transaction.unit || ""} @ ${money(transaction.unitPrice)}` : "—";
+        return `<tr><td>${displayDate(transaction.date)}</td><td>${escapeHtml(transaction.number)}</td><td>${escapeHtml(typeLabel(transaction.type))}</td><td>${escapeHtml(transactionAccountLabel(transaction))}</td><td>${escapeHtml(transaction.party || "—")}</td><td>${escapeHtml(item)}</td><td>${escapeHtml(transaction.payment || "—")}</td><td>${escapeHtml(transaction.reference || "—")}</td><td>${money(transaction.amount)}</td><td>${escapeHtml(transaction.notes || "—")}</td></tr>`;
+      }).join("");
+      const summary = [...byType].map(([type,amount])=>`${typeLabel(type)}: ${money(amount)}`).join(" · ");
+      printLedgerTable(title,`${subtitle} · ${transactions.length} transaction${transactions.length===1?"":"s"}`,["Date","Transaction #","Type","Account / description","Customer / supplier","Item details","Payment","Reference","Amount (KES)","Notes"],rows,summary);
+    }
+    function printAccountTransactions() {
+      const account=document.getElementById("transaction-account-select").value;
+      if (!account) { notify("Select an account to print its records."); return; }
+      const transactions=data.transactions.filter(transaction=>transactionAccountLabel(transaction)===account);
+      printTransactionLedger(transactions,"ACCOUNT TRANSACTION LEDGER",`Account / description: ${account}`);
+    }
+    function printAllTransactions() {
+      printTransactionLedger(data.transactions,"ALL TRANSACTIONS LEDGER",`All recorded transactions through ${displayDate(todayIso())} · KES`);
+    }
+    function printLedgerTable(title, subtitle, headers, rows, summary) {
+      if (!rows.length) { notify("There are no records to print."); return; }
+      const root=document.getElementById("print-root");
+      root.hidden=false;
+      root.classList.add("ledger-print");
+      root.innerHTML=`<style>@page{size:landscape;margin:12mm}@media print{#print-root.ledger-print{padding:0!important;font-size:9px}#print-root.ledger-print th,#print-root.ledger-print td{padding:4px;font-size:8px;overflow-wrap:anywhere}#print-root.ledger-print table{table-layout:fixed;width:100%}}</style>${printableHeader(title,subtitle)}${summary?`<p>${escapeHtml(summary)}</p>`:""}<table><thead><tr>${headers.map(header=>`<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table><p style="margin-top:24px;color:#666;font-size:10px">Generated from the business ledger on ${displayDate(todayIso())}.</p>`;
+      window.print();
+      setTimeout(()=>{root.hidden=true;root.classList.remove("ledger-print");root.innerHTML="";},500);
+    }
+    function download(filename, text, type) {
+      const blob=new Blob([text],{type}), url=URL.createObjectURL(blob), a=document.createElement("a");
+      a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    }
+    function csvText(headers, rows) {
+      return "\ufeff"+[headers,...rows].map(row=>row.map(cell=>`"${String(cell??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+    }
+    function exportCsvFile(filename, headers, rows, message) {
+      download(filename,csvText(headers,rows),"text/csv;charset=utf-8");
+      notify(message);
+    }
+    function exportTransactionsCsv(transactions, filename, message) {
+      const headers=["Transaction number","Date","Type","Party","Account / description","Item","Quantity","Unit","Unit price KES","Amount KES","Payment method","Reference","Notes"];
+      const rows=transactions.map(t=>[t.number,t.date,typeLabel(t.type),t.party,transactionAccountLabel(t),getItem(t.itemId)?.name||"",t.quantity||"",t.unit||"",t.unitPrice||"",t.amount,t.payment,t.reference,t.notes]);
+      exportCsvFile(filename,headers,rows,message);
+    }
+    function exportCsv() {
+      exportTransactionsCsv(data.transactions,"business-transactions.csv","Transactions exported as CSV.");
+    }
+    function exportAccountCsv() {
+      const account=document.getElementById("transaction-account-select").value;
+      if (!account) { notify("Select an account to download its records."); return; }
+      const transactions=data.transactions.filter(transaction=>transactionAccountLabel(transaction)===account);
+      const slug=account.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"account";
+      exportTransactionsCsv(transactions,`ledgerly-${slug}-transactions.csv`,`${account} records exported as CSV.`);
+    }
+    function exportAllTransactionsCsv() {
+      exportTransactionsCsv(data.transactions,"business-transactions.csv","All transactions exported as CSV.");
+    }
+    function exportTransportCsv() {
+      const headers=["Trip number","Load carried","Carried by","Departure date and time","Arrival date and time","Total mileage","Mileage unit","Fuel cost KES","Additional costs KES","Trip total costs KES","Additional cost details","Load value KES","Payment method","Notes"];
+      const rows=data.transports.map(trip=>[trip.number,trip.load,trip.carrier,trip.departure,trip.arrival,trip.mileage,trip.mileageUnit,trip.fuelCost,trip.additionalCosts,(Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0),trip.additionalCostDetails,trip.loadValue,trip.payment,trip.notes]);
+      exportCsvFile("ledgerly-transport-records.csv",headers,rows,"Transport records exported as CSV.");
+    }
+    function inventoryRecordValues(items) {
+      const stock=new Map(currentStock().map(row=>[row.item.id,row]));
+      return items.map(item=>{
+        const row=stock.get(item.id);
+        return [
+          item.id,item.name,item.unit,item.openingQuantity,
+          item.openingCost===null||item.openingCost===""?"Unknown":item.openingCost,
+          row?.quantity??0,row?.knownQuantity??0,row?.unknownQuantity??0,
+          row?.averageCost===null||row?.averageCost===undefined?"Unknown":row.averageCost,
+          row?.value??0
+        ];
+      });
+    }
+    function inventoryPrintRows(items) {
+      const stock=new Map(currentStock().map(row=>[row.item.id,row]));
+      return items.map(item=>{
+        const row=stock.get(item.id);
+        const openingCost=item.openingCost===null||item.openingCost===""?"Unknown":money(item.openingCost);
+        const averageCost=row?.averageCost===null||row?.averageCost===undefined?"Unknown":money(row.averageCost);
+        return `<tr><td>${escapeHtml(item.name)}</td><td>${escapeHtml(item.unit)}</td><td>${fmt(item.openingQuantity)}</td><td>${openingCost}</td><td>${fmt(row?.quantity??0)}</td><td>${fmt(row?.knownQuantity??0)}</td><td>${fmt(row?.unknownQuantity??0)}</td><td>${averageCost}</td><td>${money(row?.value??0)}</td></tr>`;
+      });
+    }
+    const inventoryCsvHeaders=["Item ID","Item","Unit","Opening quantity","Opening unit cost KES","Current quantity","Costed quantity","Uncosted quantity","Average cost KES per unit","Known stock value KES"];
+    const inventoryPrintHeaders=["Item","Unit","Opening quantity","Opening unit cost (KES)","Current quantity","Costed quantity","Uncosted quantity","Average cost (KES / unit)","Known stock value (KES)"];
+    function exportInventoryCsv(items,filename,message) {
+      exportCsvFile(filename,inventoryCsvHeaders,inventoryRecordValues(items),message);
+    }
+    function exportAllInventory() {
+      exportInventoryCsv(data.items,"ledgerly-inventory.csv","Inventory exported as CSV.");
+    }
+    function exportSelectedInventoryItem() {
+      const item=data.items.find(record=>record.id===document.getElementById("inventory-record-select").value);
+      if(!item){notify("Select an inventory item to download its record.");return;}
+      const slug=item.name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"item";
+      exportInventoryCsv([item],`ledgerly-inventory-${slug}.csv`,`${item.name} inventory record exported as CSV.`);
+    }
+    function printInventoryRecords(items,title,subtitle) {
+      const rows=inventoryPrintRows(items);
+      const stock=new Map(currentStock().map(row=>[row.item.id,row]));
+      const totalUnits=items.reduce((sum,item)=>sum+(stock.get(item.id)?.quantity||0),0);
+      printLedgerTable(title,subtitle,inventoryPrintHeaders,rows,`${items.length} item${items.length===1?"":"s"} · ${fmt(totalUnits)} total units. Known value excludes uncosted stock.`);
+    }
+    function printAllInventory() {
+      printInventoryRecords(data.items,"INVENTORY STOCK RECORDS",`Current stock snapshot · ${displayDate(todayIso())} · KES`);
+    }
+    function printSelectedInventoryItem() {
+      const item=data.items.find(record=>record.id===document.getElementById("inventory-record-select").value);
+      if(!item){notify("Select an inventory item to print its record.");return;}
+      printInventoryRecords([item],"INVENTORY ITEM RECORD",`${item.name} · Current stock snapshot · ${displayDate(todayIso())} · KES`);
+    }
+    function productionMaterialText(batch,cost) {
+      return (batch.materials||[]).map((line,index)=>{
+        const item=getItem(line.itemId), materialCost=cost?.materials?.[index];
+        const unitCost=materialCost?.unknown?"Unknown":money(materialCost?.unitCost||0);
+        const lineCost=materialCost?.unknown?`Unknown (known portion ${money(materialCost?.amount||0)})`:money(materialCost?.amount||0);
+        return `${item?.name||"Unknown item"}: ${fmt(line.quantity)} ${item?.unit||""} @ ${unitCost}, line cost ${lineCost}`;
+      }).join(" | ");
+    }
+    function productionCsvRows(batches) {
+      const ledger=inventoryLedger();
+      return batches.map(batch=>{
+        const item=getItem(batch.outputItemId), cost=ledger.productionCosts.get(batch.id);
+        return [batch.number,batch.date,item?.name||"Unknown item",batch.outputQuantity,item?.unit||"",productionMaterialText(batch,cost),batch.additionalCosts,batch.payment,cost?.unknown?"Unknown":cost?.totalCost??"",cost?.unknown?"Unknown":cost?.unitCost??"",batch.notes];
+      });
+    }
+    const productionCsvHeaders=["Batch number","Production date","Finished item","Finished quantity","Finished unit","Raw materials and costs","Additional production costs KES","Additional-cost payment","Total batch cost KES","Finished unit cost KES","Notes"];
+    function exportProductionCsv(batches,filename,message) {
+      exportCsvFile(filename,productionCsvHeaders,productionCsvRows(batches),message);
+    }
+    function exportAllProduction() {
+      exportProductionCsv(data.productions,"ledgerly-production-batches.csv","Production batches exported as CSV.");
+    }
+    function selectedProductionBatch() {
+      return data.productions.find(batch=>batch.id===document.getElementById("production-record-select").value);
+    }
+    function printSelectedProductionBatch() {
+      const batch=selectedProductionBatch();
+      if(!batch){notify("Select a production batch to print its record.");return;}
+      printProduction(batch.id);
+    }
+    function exportSelectedProductionBatch() {
+      const batch=selectedProductionBatch();
+      if(!batch){notify("Select a production batch to download its record.");return;}
+      const slug=String(batch.number||"batch").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"batch";
+      exportProductionCsv([batch],`ledgerly-production-${slug}.csv`,`${batch.number} production record exported as CSV.`);
+    }
+    function printProductionRecords(batches,title,subtitle) {
+      const ledger=inventoryLedger();
+      const rows=batches.map(batch=>{
+        const item=getItem(batch.outputItemId), cost=ledger.productionCosts.get(batch.id);
+        return `<tr><td>${escapeHtml(batch.number)}</td><td>${displayDate(batch.date)}</td><td>${escapeHtml(item?.name||"Unknown item")}</td><td>${fmt(batch.outputQuantity)} ${escapeHtml(item?.unit||"")}</td><td>${escapeHtml(productionMaterialText(batch,cost))}</td><td>${money(batch.additionalCosts)}</td><td>${cost?.unknown?"Unknown":money(cost?.totalCost||0)}</td><td>${cost?.unknown?"Unknown":money(cost?.unitCost||0)}</td><td>${escapeHtml(batch.payment||"—")}</td><td>${escapeHtml(batch.notes||"—")}</td></tr>`;
+      });
+      printLedgerTable(title,subtitle,["Batch #","Date","Finished item","Output quantity","Raw materials, quantities and costs","Additional costs (KES)","Total batch cost (KES)","Unit cost (KES)","Payment","Notes"],rows,`${batches.length} production batch${batches.length===1?"":"es"}. Unknown costs are shown explicitly.`);
+    }
+    function printAllProduction() {
+      printProductionRecords(data.productions,"PRODUCTION BATCH LEDGER",`All production batches through ${displayDate(todayIso())} · KES`);
+    }
+    function exportSelectedTransportTrip() {
+      const trip=data.transports.find(record=>record.id===document.getElementById("transport-record-select").value);
+      if(!trip){notify("Select a transport trip to download its record.");return;}
+      const headers=["Trip number","Load carried","Carried by","Departure date and time","Arrival date and time","Total mileage","Mileage unit","Fuel cost KES","Additional costs KES","Trip total costs KES","Additional cost details","Load value KES","Payment method","Notes"];
+      const rows=[[trip.number,trip.load,trip.carrier,trip.departure,trip.arrival,trip.mileage,trip.mileageUnit,trip.fuelCost,trip.additionalCosts,(Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0),trip.additionalCostDetails,trip.loadValue,trip.payment,trip.notes]];
+      const slug=String(trip.number||"trip").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"trip";
+      exportCsvFile(`ledgerly-transport-${slug}.csv`,headers,rows,`${trip.number} transport record exported as CSV.`);
+    }
+    function printSelectedTransportTrip() {
+      const trip=data.transports.find(record=>record.id===document.getElementById("transport-record-select").value);
+      if(!trip){notify("Select a transport trip to print its record.");return;}
+      printTransport(trip.id);
+    }
+    function printAllTransport() {
+      const rows=[...data.transports].sort((a,b)=>String(b.departure).localeCompare(String(a.departure))).map(trip=>{
+        const total=(Number(trip.fuelCost)||0)+(Number(trip.additionalCosts)||0);
+        return `<tr><td>${escapeHtml(trip.number)}</td><td>${escapeHtml(trip.load)}</td><td>${escapeHtml(trip.carrier)}</td><td>${displayDateTime(trip.departure)}</td><td>${trip.arrival?displayDateTime(trip.arrival):"In transit"}</td><td>${fmt(trip.mileage)} ${escapeHtml(trip.mileageUnit)}</td><td>${money(trip.loadValue)}</td><td>${money(trip.fuelCost)}</td><td>${money(trip.additionalCosts)}</td><td>${escapeHtml(trip.additionalCostDetails||"—")}</td><td>${money(total)}</td><td>${escapeHtml(trip.payment||"—")}</td><td>${escapeHtml(trip.notes||"—")}</td></tr>`;
+      });
+      printLedgerTable("TRANSPORT & EXPORT TRIP LEDGER",`All recorded trips through ${displayDate(todayIso())} · KES`,["Trip #","Load carried","Carried by","Departure","Arrival","Mileage","Load value","Fuel cost","Additional costs","Additional-cost details","Total trip costs","Payment","Notes"],rows,`${data.transports.length} transport trip${data.transports.length===1?"":"s"}. Load value is a dispatch memo amount, not income.`);
+    }
+    function exportBackup() {
+      download(`ledgerly-backup-${todayIso()}.json`,JSON.stringify(data,null,2),"application/json"); notify("Backup exported.");
+    }
+    function deleteTransaction(id) {
+      const t=data.transactions.find(row=>row.id===id); if(!t) return;
+      if(!confirm(`Delete ${typeLabel(t.type).toLowerCase()} ${t.number}? Stock and reports will be recalculated.`)) return;
+      const previous=data.transactions;
+      data.transactions=previous.filter(row=>row.id!==id);
+      if(hasInvalidInventoryHistory()) {
+        data.transactions=previous;
+        notify("This transaction is needed for a later sale or production batch. Delete or correct the dependent record first.");
+        return;
+      }
+      saveData(); renderAll(); notify("Transaction deleted.");
+    }
+    function deleteTransport(id) {
+      const trip=data.transports.find(row=>row.id===id); if(!trip) return;
+      if(!confirm(`Delete transport trip ${trip.number}? Its fuel and additional costs will be removed from profit & loss.`)) return;
+      data.transports=data.transports.filter(row=>row.id!==id);
+      saveData();renderAll();notify("Transport record deleted.");
+    }
+    function deleteProduction(id) {
+      const batch=data.productions.find(row=>row.id===id); if(!batch) return;
+      if(!confirm(`Delete production batch ${batch.number}? Inventory and product costs will be recalculated.`)) return;
+      const previous=data.productions;
+      data.productions=previous.filter(row=>row.id!==id);
+      if(hasInvalidInventoryHistory()) {
+        data.productions=previous;
+        notify("This batch is needed for a later sale or production batch. Correct or remove the dependent record first.");
+        return;
+      }
+      saveData();renderAll();notify("Production batch deleted.");
+    }
+
+    function syncSnapshot(source = data) {
+      const items = source.items.map(item => ({
+        id: String(item.id),
+        name: String(item.name || "").trim(),
+        unit: String(item.unit || "").trim(),
+        openingQuantity: Number(item.openingQuantity ?? item.quantity) || 0,
+        openingCost: item.openingCost === null || item.openingCost === "" || item.openingCost === undefined ? null : Number(item.openingCost)
+      })).sort((a,b) => a.id.localeCompare(b.id));
+      const transactions = source.transactions.map(t => ({
+        id: String(t.id),
+        number: String(t.number || ""),
+        date: String(t.date || ""),
+        type: String(t.type || "").toLowerCase(),
+        party: String(t.party || ""),
+        description: String(t.description || ""),
+        itemId: String(t.itemId || ""),
+        quantity: Number(t.quantity) || 0,
+        unit: String(t.unit || ""),
+        unitPrice: Number(t.unitPrice) || 0,
+        amount: Number(t.amount) || 0,
+        payment: String(t.payment || "Cash"),
+        reference: String(t.reference || ""),
+        notes: String(t.notes || ""),
+        createdAt: String(t.createdAt || "")
+      })).sort((a,b) => a.id.localeCompare(b.id));
+      const transports = (source.transports || []).map(trip => ({
+        id: String(trip.id),
+        number: String(trip.number || ""),
+        load: String(trip.load || "").trim(),
+        carrier: String(trip.carrier || "").trim(),
+        departure: String(trip.departure || ""),
+        arrival: String(trip.arrival || ""),
+        mileage: Number(trip.mileage) || 0,
+        mileageUnit: String(trip.mileageUnit || "km"),
+        fuelCost: Number(trip.fuelCost) || 0,
+        additionalCosts: Number(trip.additionalCosts) || 0,
+        additionalCostDetails: String(trip.additionalCostDetails || ""),
+        loadValue: Number(trip.loadValue) || 0,
+        payment: String(trip.payment || "Cash"),
+        notes: String(trip.notes || ""),
+        createdAt: String(trip.createdAt || "")
+      })).sort((a,b) => a.id.localeCompare(b.id));
+      const productions = (source.productions || []).map(batch => ({
+        id: String(batch.id),
+        number: String(batch.number || ""),
+        date: String(batch.date || ""),
+        outputItemId: String(batch.outputItemId || ""),
+        outputQuantity: Number(batch.outputQuantity) || 0,
+        materials: (batch.materials || []).map(line => ({
+          itemId: String(line.itemId || ""),
+          quantity: Number(line.quantity) || 0
+        })).sort((a,b)=>a.itemId.localeCompare(b.itemId)||a.quantity-b.quantity),
+        additionalCosts: Number(batch.additionalCosts) || 0,
+        payment: String(batch.payment || "Cash"),
+        notes: String(batch.notes || ""),
+        createdAt: String(batch.createdAt || "")
+      })).sort((a,b) => a.id.localeCompare(b.id));
+      const openingSource=source.openingBalances||{asOfDate:"",accounts:[]};
+      const openingBalances={
+        asOfDate:String(openingSource.asOfDate||""),
+        accounts:(openingSource.accounts||[]).map(account=>({
+          id:String(account.id||""),
+          type:String(account.type||""),
+          name:String(account.name||"").trim(),
+          amount:Number(account.amount)||0
+        })).sort((a,b)=>a.id.localeCompare(b.id))
+      };
+      return { items, transactions, productions, transports, openingBalances };
+    }
+    function recordsEqual(a,b) { return JSON.stringify(a) === JSON.stringify(b); }
+    function mergeSyncCollection(kind, baseRecords, appRecords, excelRecords, conflicts) {
+      const base = new Map(baseRecords.map(row=>[row.id,row]));
+      const app = new Map(appRecords.map(row=>[row.id,row]));
+      const excel = new Map(excelRecords.map(row=>[row.id,row]));
+      const merged = [];
+      const ids = new Set([...base.keys(),...app.keys(),...excel.keys()]);
+      for (const id of ids) {
+        const before = base.get(id) ?? null, local = app.get(id) ?? null, workbook = excel.get(id) ?? null;
+        const appChanged = !recordsEqual(local,before), excelChanged = !recordsEqual(workbook,before);
+        let selected = local;
+        if (appChanged && excelChanged && !recordsEqual(local,workbook)) {
+          conflicts.push({ kind, id, app: local, excel: workbook });
+        } else if (!appChanged) {
+          selected = workbook;
+        }
+        if (selected) merged.push(selected);
+      }
+      return merged;
+    }
+    function mergeExcelState(workbookState) {
+      const appState = syncSnapshot();
+      const excelState = syncSnapshot({
+        ...data,
+        items: workbookState.items || [],
+        transactions: workbookState.transactions || [],
+        productions: workbookState.productions || [],
+        transports: workbookState.transports || [],
+        openingBalances: workbookState.openingBalances || { asOfDate:"", accounts:[] }
+      });
+      const baseState = data.syncBase || { items: [], transactions: [], productions: [], transports: [], openingBalances:{asOfDate:"",accounts:[]} };
+      const conflicts = [];
+      const openingBase=baseState.openingBalances||{asOfDate:"",accounts:[]};
+      const openingAppChanged=!recordsEqual(appState.openingBalances,openingBase);
+      const openingExcelChanged=!recordsEqual(excelState.openingBalances,openingBase);
+      let openingBalances=appState.openingBalances;
+      if(openingAppChanged&&openingExcelChanged&&!recordsEqual(appState.openingBalances,excelState.openingBalances)) {
+        conflicts.push({kind:"openingBalances",id:"openingBalances",app:appState.openingBalances,excel:excelState.openingBalances});
+      } else if(!openingAppChanged) {
+        openingBalances=excelState.openingBalances;
+      }
+      const merged = {
+        items: mergeSyncCollection("item", baseState.items || [], appState.items, excelState.items, conflicts),
+        transactions: mergeSyncCollection("transaction", baseState.transactions || [], appState.transactions, excelState.transactions, conflicts),
+        productions: mergeSyncCollection("production", baseState.productions || [], appState.productions, excelState.productions, conflicts),
+        transports: mergeSyncCollection("transport", baseState.transports || [], appState.transports, excelState.transports, conflicts),
+        openingBalances
+      };
+      return { merged, conflicts };
+    }
+    function validateSyncState(snapshot) {
+      const itemIds = new Set(), itemNames = new Set();
+      for (const item of snapshot.items) {
+        if (!item.id || itemIds.has(item.id)) throw new Error("The Excel inventory contains a blank or duplicate item ID.");
+        if (!item.name || !item.unit || !Number.isFinite(item.openingQuantity) || item.openingQuantity < 0) throw new Error(`Check the name, unit, and opening quantity for inventory item ${item.name || item.id}.`);
+        const key = item.name.toLowerCase();
+        if (itemNames.has(key)) throw new Error(`Inventory item names must be unique. Check “${item.name}”.`);
+        if (item.openingCost !== null && (!Number.isFinite(item.openingCost) || item.openingCost < 0)) throw new Error(`Opening cost for ${item.name} must be a non-negative number.`);
+        itemIds.add(item.id); itemNames.add(key);
+      }
+      const transactionIds = new Set();
+      const allowedTypes=["sale","purchase","expense","income","customer_receipt","supplier_payment","loan_received","loan_repayment","capital_introduced","capital_withdrawal"];
+      const movementTypes=["customer_receipt","supplier_payment","loan_received","loan_repayment","capital_introduced","capital_withdrawal"];
+      for (const transaction of snapshot.transactions) {
+        if (!transaction.id || transactionIds.has(transaction.id)) throw new Error("The Excel transaction list contains a blank or duplicate transaction ID.");
+        if (!allowedTypes.includes(transaction.type)) throw new Error(`Transaction ${transaction.number || transaction.id} has an unsupported type.`);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(transaction.date) || !Number.isFinite(transaction.amount) || transaction.amount <= 0) throw new Error(`Check the date and positive amount for transaction ${transaction.number || transaction.id}.`);
+        if ((transaction.type === "sale" || transaction.type === "purchase" || movementTypes.includes(transaction.type)) && !transaction.party.trim()) throw new Error(`Enter the account name for transaction ${transaction.number || transaction.id}.`);
+        if ((transaction.type === "sale" || transaction.type === "purchase") && (!itemIds.has(transaction.itemId) || transaction.quantity <= 0 || transaction.unitPrice <= 0)) throw new Error(`Check the item, quantity, and unit price for ${transaction.number || transaction.id}.`);
+        if (movementTypes.includes(transaction.type) && !["Cash","Bank","M-Pesa"].includes(transaction.payment)) throw new Error(`Choose Cash, Bank or M-Pesa for account movement ${transaction.number || transaction.id}.`);
+        transactionIds.add(transaction.id);
+      }
+      const opening=snapshot.openingBalances||{asOfDate:"",accounts:[]};
+      if(!Array.isArray(opening.accounts)) throw new Error("The opening balances list is invalid.");
+      if(opening.accounts.length&&!/^\d{4}-\d{2}-\d{2}$/.test(opening.asOfDate)) throw new Error("Enter a valid opening balance date.");
+      const balanceIds=new Set(),balanceKeys=new Set();
+      for(const account of opening.accounts) {
+        if(!account.id||balanceIds.has(account.id)||!["cash","bank","debtor","creditor","loan","capital"].includes(account.type)||!account.name||!Number.isFinite(account.amount)||account.amount<0) throw new Error("Check each opening balance account name and non-negative amount.");
+        const key=`${account.type}:${account.name.toLocaleLowerCase()}`;
+        if(balanceKeys.has(key)) throw new Error(`Duplicate opening balance for ${account.name}.`);
+        balanceIds.add(account.id);balanceKeys.add(key);
+      }
+      const productionIds = new Set(), productionNumbers = new Set();
+      for (const batch of snapshot.productions || []) {
+        if (!batch.id || productionIds.has(batch.id)) throw new Error("The Excel production list contains a blank or duplicate batch ID.");
+        if (!batch.number || productionNumbers.has(batch.number)) throw new Error("The Excel production list contains a blank or duplicate batch number.");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(batch.date) || !itemIds.has(batch.outputItemId) || !Number.isFinite(batch.outputQuantity) || batch.outputQuantity <= 0) throw new Error(`Check the date, finished item, and positive output quantity for production batch ${batch.number || batch.id}.`);
+        if (!Array.isArray(batch.materials) || !batch.materials.length || !Number.isFinite(batch.additionalCosts) || batch.additionalCosts < 0 || !["Cash","Bank","M-Pesa","Credit"].includes(batch.payment)) throw new Error(`Check the raw materials, additional costs, and payment method for production batch ${batch.number}.`);
+        const materialIds = new Set();
+        for (const material of batch.materials) {
+          if (!itemIds.has(material.itemId) || material.itemId === batch.outputItemId || materialIds.has(material.itemId) || !Number.isFinite(material.quantity) || material.quantity <= 0) throw new Error(`Check the raw-material items and quantities for production batch ${batch.number}.`);
+          materialIds.add(material.itemId);
+        }
+        productionIds.add(batch.id); productionNumbers.add(batch.number);
+      }
+      const transportIds = new Set(), transportNumbers = new Set();
+      for (const trip of snapshot.transports || []) {
+        if (!trip.id || transportIds.has(trip.id)) throw new Error("The Excel transport list contains a blank or duplicate trip ID.");
+        if (!trip.number || transportNumbers.has(trip.number)) throw new Error("The Excel transport list contains a blank or duplicate trip number.");
+        if (!trip.load || !trip.carrier || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trip.departure)) throw new Error(`Check the trip number, load, carrier, and departure date/time for ${trip.number || trip.id}.`);
+        if (trip.arrival && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trip.arrival) || trip.arrival < trip.departure)) throw new Error(`Check the arrival date/time for transport trip ${trip.number}.`);
+        if (!["km","miles"].includes(trip.mileageUnit) || !["Cash","Bank","M-Pesa","Credit"].includes(trip.payment) || !Number.isFinite(trip.mileage) || trip.mileage < 0 || ![trip.fuelCost,trip.additionalCosts,trip.loadValue].every(value=>Number.isFinite(value)&&value>=0)) throw new Error(`Check the mileage and non-negative cost values for transport trip ${trip.number}.`);
+        transportIds.add(trip.id); transportNumbers.add(trip.number);
+      }
+      const oldItems = data.items, oldTransactions = data.transactions, oldProductions = data.productions;
+      try {
+        data.items = snapshot.items.map(item=>({...item,quantity:item.openingQuantity}));
+        data.transactions = snapshot.transactions;
+        data.productions = snapshot.productions || [];
+        const issue = inventoryLedger().issues[0];
+        if (issue?.type === "unknown-cost") throw new Error(`Production batch ${issue.record.number} uses ${issue.item.name} stock with unknown cost. Enter a reliable opening cost or record a priced purchase before syncing.`);
+        if (issue?.type === "stock") throw new Error(`These edits leave too little ${issue.item.name} for a sale or production batch. Correct the dates or quantities in Excel, then sync again.`);
+        if (issue) throw new Error("These edits conflict with the inventory history. Check production and stock records in Excel, then sync again.");
+      } finally {
+        data.items = oldItems; data.transactions = oldTransactions; data.productions = oldProductions;
+      }
+    }
+    async function requestExcelSync(payload, token) {
+      const response = await fetch(SYNC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, token })
+      });
+      let result;
+      try { result = await response.json(); } catch { result = {}; }
+      if (!response.ok) throw new Error(result.error || `The Excel connector returned HTTP ${response.status}.`);
+      return result;
+    }
+    function syncSummary(record, kind) {
+      if (!record) return "Deleted";
+      if (kind === "openingBalances") return `${record.accounts.length} balance accounts · as of ${record.asOfDate || "date not set"}`;
+      if (kind === "item") return `${record.name} · opening ${fmt(record.openingQuantity)} ${record.unit} · ${record.openingCost === null ? "cost unknown" : money(record.openingCost)}`;
+      if (kind === "transport") return `${record.number} · ${record.load} · ${record.carrier} · ${displayDateTime(record.departure)} · ${money((Number(record.fuelCost)||0)+(Number(record.additionalCosts)||0))} trip costs`;
+      if (kind === "production") return `${record.number} · ${record.date} · ${getItem(record.outputItemId)?.name||record.outputItemId} · ${fmt(record.outputQuantity)} produced`;
+      return `${record.number} · ${typeLabel(record.type)} · ${record.date} · ${record.party || record.description} · ${money(record.amount)}`;
+    }
+    async function writeMergedExcelState(merged, token) {
+      validateSyncState(merged);
+      await requestExcelSync({ action: "write", state: merged }, token);
+      data.items = merged.items.map(item=>({...item,quantity:item.openingQuantity}));
+      data.transactions = merged.transactions;
+      data.productions = merged.productions || [];
+      data.transports = merged.transports || [];
+      data.openingBalances = merged.openingBalances || { asOfDate:"", accounts:[] };
+      data.syncBase = syncSnapshot();
+      data.lastSyncedAt = new Date().toISOString();
+      saveData(); renderAll(); closeModal();
+      notify("App and Excel are in sync.");
+    }
+    function showSyncConflicts(result, token) {
+      const conflictsHtml = result.conflicts.map((conflict,index) => `<div class="sync-conflict">
+        <strong>${conflict.kind === "openingBalances" ? "Opening balances" : conflict.kind === "item" ? "Inventory item" : conflict.kind === "transport" ? "Transport trip" : conflict.kind === "production" ? "Production batch" : "Transaction"} · ${escapeHtml(conflict.id)}</strong>
+        <div class="sync-versions"><div><b>App</b>${escapeHtml(syncSummary(conflict.app,conflict.kind))}</div><div><b>Excel</b>${escapeHtml(syncSummary(conflict.excel,conflict.kind))}</div></div>
+        <div class="form-group" style="margin-top:9px"><label for="sync-choice-${index}">Keep which version?</label><select class="field-control sync-conflict-choice" id="sync-choice-${index}" data-conflict-index="${index}" required><option value="">Choose one</option><option value="app">Keep app</option><option value="excel">Keep Excel</option></select></div>
+      </div>`).join("");
+      showModal("Choose which edits to keep", `${result.conflicts.length} record${result.conflicts.length === 1 ? "" : "s"} changed in both places. No changes have been written yet.`, `<div class="notice warning">Resolve every conflict to finish syncing. Other non-conflicting changes will be merged automatically.</div>${conflictsHtml}<div class="modal-actions"><button type="button" class="quiet" id="cancel-sync-conflicts">Cancel</button><button type="button" class="primary" id="apply-sync-conflicts" disabled>Apply choices &amp; sync</button></div>`);
+      const choices = [...document.querySelectorAll(".sync-conflict-choice")];
+      const applyButton = document.getElementById("apply-sync-conflicts");
+      const updateButton = () => { applyButton.disabled = choices.some(select=>!select.value); };
+      choices.forEach(select=>select.addEventListener("change",updateButton));
+      document.getElementById("cancel-sync-conflicts").addEventListener("click",closeModal);
+      applyButton.addEventListener("click",async()=>{
+        applyButton.disabled=true; applyButton.textContent="Syncing…";
+        try {
+          for (const select of choices) {
+            const conflict=result.conflicts[Number(select.dataset.conflictIndex)];
+            if(conflict.kind==="openingBalances") {
+              result.merged.openingBalances=conflict[select.value];
+              continue;
+            }
+            const collection=conflict.kind==="item"?"items":conflict.kind==="transport"?"transports":conflict.kind==="production"?"productions":"transactions";
+            result.merged[collection]=result.merged[collection].filter(row=>row.id!==conflict.id);
+            const chosen=conflict[select.value];
+            if(chosen) result.merged[collection].push(chosen);
+          }
+          await writeMergedExcelState(result.merged,token);
+        } catch(error) {
+          console.error("Could not sync selected Excel changes:",error);
+          notify(error.message || "Could not sync with Excel.");
+          applyButton.disabled=false; applyButton.textContent="Apply choices & sync";
+        }
+      });
+    }
+    function openSyncModal() {
+      const token=sessionStorage.getItem("ledgerly-excel-sync-token")||"";
+      showModal("Sync with your Excel workbook", "Review changes on both sides before resolving conflicts.", `<div class="notice" style="margin-bottom:13px"><strong>Before you sync</strong><br>1. Double-click <strong>start-ledgerly-sync.cmd</strong> in the same folder as this app.<br>2. Copy the one-time token shown in its PowerShell window into the field below.<br>3. Save any Excel edits, then sync. The connector is local to this computer.</div>
+        <form id="excel-sync-form"><div class="form-group"><label for="excel-sync-token">One-time connector token</label><input class="field-control" id="excel-sync-token" name="token" autocomplete="off" required value="${escapeHtml(token)}" placeholder="Paste the token from the connector window"></div>
+        <div class="help-text" style="margin-top:7px">The workbook’s original tabs are preserved. Sync uses the editable LEDGERLY TRANSACTIONS, LEDGERLY INVENTORY, LEDGERLY TRANSPORT, LEDGERLY PRODUCTION, and LEDGERLY OPENING BALANCES tabs.</div>
+        <div class="notice" id="excel-sync-status" style="display:none;margin-top:12px"></div>
+        <div class="modal-actions"><button type="button" class="quiet" id="cancel-excel-sync">Cancel</button><button type="submit" class="primary" id="run-excel-sync">Read, merge &amp; sync</button></div></form>`);
+      document.getElementById("cancel-excel-sync").addEventListener("click",closeModal);
+      document.getElementById("excel-sync-form").addEventListener("submit",async event=>{
+        event.preventDefault();
+        const syncButton=document.getElementById("run-excel-sync"),status=document.getElementById("excel-sync-status");
+        const currentToken=document.getElementById("excel-sync-token").value.trim();
+        if(!currentToken){notify("Paste the connector token first.");return;}
+        sessionStorage.setItem("ledgerly-excel-sync-token",currentToken);
+        syncButton.disabled=true;syncButton.textContent="Reading workbook…";status.style.display="block";status.classList.remove("warning");status.textContent="Reading workbook changes and comparing them with the app…";
+        try {
+          const workbookState=await requestExcelSync({action:"read"},currentToken);
+          const result=mergeExcelState(workbookState);
+          if(result.conflicts.length) {
+            showSyncConflicts(result,currentToken);
+          } else {
+            status.textContent="Merging changes and saving the workbook…";
+            await writeMergedExcelState(result.merged,currentToken);
+          }
+        } catch(error) {
+          console.error("Excel synchronization failed:",error);
+          status.classList.add("warning");status.textContent=error.message.includes("Failed to fetch")
+            ? "Could not reach the connector. Start start-ledgerly-sync.cmd, then try again."
+            : error.message;
+          syncButton.disabled=false;syncButton.textContent="Read, merge & sync";
+        }
+      });
+    }
+
+    document.querySelectorAll(".nav button").forEach(button=>button.addEventListener("click",()=>navigate(button.dataset.page)));
+    document.querySelectorAll("[data-nav]").forEach(button=>button.addEventListener("click",()=>navigate(button.dataset.nav)));
+    document.getElementById("new-transaction-button").addEventListener("click",()=>openTransactionModal("sale"));
+    document.getElementById("sync-excel-button").addEventListener("click",openSyncModal);
+    document.getElementById("transaction-new-button").addEventListener("click",()=>openTransactionModal("sale"));
+    document.querySelectorAll("[data-quick-type]").forEach(button=>button.addEventListener("click",()=>openTransactionModal(button.dataset.quickType)));
+    document.getElementById("dashboard-period").addEventListener("change",renderDashboard);
+    document.getElementById("transaction-filter").addEventListener("change",renderTransactions);
+    document.getElementById("transaction-search").addEventListener("input",renderTransactions);
+    document.getElementById("transaction-account-select").addEventListener("change",renderTransactionExportOptions);
+    document.getElementById("export-account-csv").addEventListener("click",exportAccountCsv);
+    document.getElementById("print-account-records").addEventListener("click",printAccountTransactions);
+    document.getElementById("export-all-transactions").addEventListener("click",exportAllTransactionsCsv);
+    document.getElementById("print-all-transactions").addEventListener("click",printAllTransactions);
+    document.getElementById("inventory-search").addEventListener("input",renderInventory);
+    document.getElementById("inventory-record-select").addEventListener("change",()=>updateRecordSelectionButtons("inventory-record-select",["download-inventory-item","print-inventory-item"]));
+    document.getElementById("download-inventory-item").addEventListener("click",exportSelectedInventoryItem);
+    document.getElementById("print-inventory-item").addEventListener("click",printSelectedInventoryItem);
+    document.getElementById("download-all-inventory").addEventListener("click",exportAllInventory);
+    document.getElementById("print-all-inventory").addEventListener("click",printAllInventory);
+    document.getElementById("production-new-button").addEventListener("click",()=>openProductionModal());
+    document.getElementById("production-record-select").addEventListener("change",()=>updateRecordSelectionButtons("production-record-select",["download-production-batch","print-production-batch"]));
+    document.getElementById("download-production-batch").addEventListener("click",exportSelectedProductionBatch);
+    document.getElementById("print-production-batch").addEventListener("click",printSelectedProductionBatch);
+    document.getElementById("download-all-production").addEventListener("click",exportAllProduction);
+    document.getElementById("print-all-production").addEventListener("click",printAllProduction);
+    document.getElementById("transport-search").addEventListener("input",renderTransport);
+    document.getElementById("add-item-button").addEventListener("click",openAddItemModal);
+    document.getElementById("transport-new-button").addEventListener("click",()=>openTransportModal());
+    document.getElementById("transport-export-button").addEventListener("click",exportTransportCsv);
+    document.getElementById("transport-record-select").addEventListener("change",()=>updateRecordSelectionButtons("transport-record-select",["download-transport-trip","print-transport-trip"]));
+    document.getElementById("download-transport-trip").addEventListener("click",exportSelectedTransportTrip);
+    document.getElementById("print-transport-trip").addEventListener("click",printSelectedTransportTrip);
+    document.getElementById("print-all-transport").addEventListener("click",printAllTransport);
+    document.getElementById("business-profile-button").addEventListener("click",openBusinessModal);
+    document.getElementById("opening-balances-button").addEventListener("click",openOpeningBalancesModal);
+    document.getElementById("download-balances-button").addEventListener("click",exportAccountBalancesCsv);
+    document.getElementById("print-balances-button").addEventListener("click",printAccountBalances);
+    document.getElementById("export-csv-button").addEventListener("click",exportCsv);
+    document.getElementById("backup-button").addEventListener("click",exportBackup);
+    document.getElementById("print-report-button").addEventListener("click",printReport);
+    document.getElementById("restore-button").addEventListener("click",()=>document.getElementById("restore-file").click());
+    document.getElementById("restore-file").addEventListener("change",async event=>{
+      const file=event.target.files[0]; if(!file) return;
+      try {
+        const parsed=JSON.parse(await file.text());
+        if(parsed.version!==1||!Array.isArray(parsed.items)||!Array.isArray(parsed.transactions)||!parsed.business||(parsed.productions!==undefined&&!Array.isArray(parsed.productions))||(parsed.transports!==undefined&&!Array.isArray(parsed.transports))||(parsed.openingBalances!==undefined&&(!parsed.openingBalances||!Array.isArray(parsed.openingBalances.accounts)))) throw new Error("This file is not a valid Ledgerly backup.");
+        if(!confirm("Replace the current records with this backup? Export your current data first if you may need it.")) return;
+        data={...parsed,openingBalances:parsed.openingBalances||{asOfDate:"",accounts:[]},syncBase:parsed.syncBase?{...parsed.syncBase,openingBalances:parsed.syncBase.openingBalances||{asOfDate:"",accounts:[]}}:null,productions:Array.isArray(parsed.productions)?parsed.productions:[],transports:Array.isArray(parsed.transports)?parsed.transports:[]};saveData();renderAll();notify("Backup restored.");
+      } catch(error) { console.error(error); notify(error.message||"Could not read the backup."); }
+      finally { event.target.value=""; }
+    });
+    document.getElementById("menu-button").addEventListener("click",()=>document.getElementById("sidebar").classList.toggle("open"));
+    document.body.addEventListener("click",event=>{
+      const editTransaction=event.target.closest("[data-edit-transaction]"); if(editTransaction) openTransactionModal("sale",editTransaction.dataset.editTransaction);
+      const editItem=event.target.closest("[data-edit-item]"); if(editItem) openAddItemModal(editItem.dataset.editItem);
+      const editProduction=event.target.closest("[data-edit-production]"); if(editProduction) openProductionModal(editProduction.dataset.editProduction);
+      const editTransport=event.target.closest("[data-edit-transport]"); if(editTransport) openTransportModal(editTransport.dataset.editTransport);
+      const print=event.target.closest("[data-print-transaction]"); if(print) printTransaction(print.dataset.printTransaction);
+      const printTrip=event.target.closest("[data-print-transport]"); if(printTrip) printTransport(printTrip.dataset.printTransport);
+      const printBatch=event.target.closest("[data-print-production]"); if(printBatch) printProduction(printBatch.dataset.printProduction);
+      const remove=event.target.closest("[data-delete-transaction]"); if(remove) deleteTransaction(remove.dataset.deleteTransaction);
+      const removeBatch=event.target.closest("[data-delete-production]"); if(removeBatch) deleteProduction(removeBatch.dataset.deleteProduction);
+      const removeTrip=event.target.closest("[data-delete-transport]"); if(removeTrip) deleteTransport(removeTrip.dataset.deleteTransport);
+    });
+    document.addEventListener("keydown",event=>{if(event.key==="Escape") closeModal();});
+    renderAll();
+    setInterval(refreshDashboardGreeting,60000);
+    document.addEventListener("visibilitychange",refreshDashboardGreeting);
+  </script>
+</body>
+</html>
