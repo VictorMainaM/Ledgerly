@@ -1,28 +1,20 @@
 # Ledgerly
 
-Ledgerly is a local-first business recordkeeping app for sales, purchases, expenses, inventory, production, transport, account balances, and reports. It runs in a browser and does not require an online account.
+Ledgerly is a local-first business recordkeeping app for transactions, inventory, production, transport, account balances, and reports.
 
 ## Run the app
 
-1. Download or extract the Ledgerly files to a folder on a Windows computer.
-2. Open `business-ledger.html` in a browser.
-3. Enter your business details, then record transactions and inventory.
-4. Use **Export data** regularly to save a backup. Records are stored in the browser on that device; clearing browser data or switching browsers can remove or hide them.
+Open `business-ledger.html` in Microsoft Edge or Chrome. Your records are stored in the browser on this device. Use **Documents & reports → Export data** regularly to create a backup.
 
-## Opening balances
+## Separate companies
 
-In **Documents & reports**, choose **Set opening balances**. Set the date the balances apply from, then add cash/M-Pesa, bank, customer debts, supplier debts, loans, or capital. The report shows balances brought down (b/d), movements, and balances carried down (c/d). These opening balances and account movements do not count as profit or loss. Use consistent customer, supplier, loan, and capital account names in later transactions.
+Use the **Company** switcher in the sidebar to add a company or switch between existing companies. Existing Ledgerly data is kept as the first company when this version is opened. Each company has a separate business profile, transactions, inventory, production batches, transport records, opening balances, and Excel sync history. Adding a company starts with an empty inventory and ledger; it does not change any other company's records.
+
+Company profiles are stored locally in the same browser profile. They are separate records, not separate logins or password-protected accounts. Back up each company's records separately using **Export data** while that company is selected.
 
 ## Excel synchronization (Windows)
 
-Synchronization is manual and requires desktop Microsoft Excel:
-
-1. Open the workbook in Excel and save a separate backup.
-2. Run `start-ledgerly-sync.cmd` from the Ledgerly folder and keep its window open.
-3. In Ledgerly, select **Sync**, enter the one-time token shown by the connector, and start the sync.
-4. Save Excel edits before syncing. Review any conflicts and choose which version to keep.
-
-Ledgerly uses editable `LEDGERLY TRANSACTIONS`, `LEDGERLY INVENTORY`, `LEDGERLY TRANSPORT`, `LEDGERLY PRODUCTION`, and `LEDGERLY OPENING BALANCES` sheets. Existing workbook sheets are preserved. The app and workbook are not continuously synchronized; run the sync when you want to exchange changes.
+Synchronization is manual and requires desktop Microsoft Excel. Start `start-ledgerly-sync.cmd`, then open **Sync Excel** for the selected company. Assign each company a different full Windows path ending in `.xlsx`. Save workbook edits before syncing and resolve any conflicts shown by Ledgerly. You can have Ledgerly create a new workbook at the chosen path if it does not exist. The connector preserves existing workbook tabs.
 
 ## Included files
 

@@ -41,7 +41,9 @@
     }
     .brand-name { font-size: 17px; font-weight: 760; letter-spacing: -.5px; }
     .brand-name span { color: var(--green); }
-    .workspace-label { padding: 0 12px 12px; color: #9aa39e; font-size: 10px; font-weight: 750; letter-spacing: 1.15px; text-transform: uppercase; }
+    .workspace-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 0 12px 12px; border: 0; background: transparent; color: #9aa39e; text-align: left; font-size: 10px; font-weight: 750; letter-spacing: 1.15px; text-transform: uppercase; }
+    .workspace-label:hover { color: var(--green); }
+    .workspace-company-name { max-width: 175px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: .3px; text-transform: none; }
     .nav { display: grid; gap: 5px; }
     .nav button {
       display: flex; align-items: center; gap: 12px; border: 0; border-radius: 11px; background: transparent;
@@ -258,7 +260,9 @@
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="brand"><div class="brand-mark">L</div><div class="brand-name">ledger<span>ly</span></div></div>
-      <div class="workspace-label">Workspace</div>
+      <button class="workspace-label" id="company-switch-button" aria-label="Switch company">
+        <span>Company</span><span class="workspace-company-name" id="workspace-company-name">My business</span><span aria-hidden="true">⌄</span>
+      </button>
       <nav class="nav" aria-label="Main navigation">
         <button class="active" data-page="dashboard"><span class="nav-icon">⌂</span>Overview</button>
         <button data-page="transactions"><span class="nav-icon">↔</span>Transactions</button>
@@ -430,7 +434,7 @@
           <div><h2>Documents &amp; reports</h2><p>Create print-ready records from transactions, production batches and trips.</p></div>
           <div class="toolbar"><button class="quiet" id="export-csv-button">Export CSV</button><button class="secondary" id="backup-button">Export data</button><button class="primary" id="print-report-button">Print P&amp;L report</button></div>
         </div>
-        <div class="notice" style="margin-bottom:17px">For two-way Excel sync, start <strong>start-ledgerly-sync.cmd</strong> in the app folder, then click <strong>Sync Excel</strong>. Sync is manual: save Excel edits first. The workbook gets editable <strong>LEDGERLY TRANSACTIONS</strong>, <strong>LEDGERLY INVENTORY</strong>, <strong>LEDGERLY TRANSPORT</strong>, <strong>LEDGERLY PRODUCTION</strong>, and <strong>LEDGERLY OPENING BALANCES</strong> tabs; the original tabs are preserved.</div>
+        <div class="notice" style="margin-bottom:17px">For two-way Excel sync, start <strong>start-ledgerly-sync.cmd</strong> in the app folder, then click <strong>Sync Excel</strong>. Choose a separate workbook path for each company. Sync is manual: save Excel edits first. The workbook gets editable <strong>LEDGERLY TRANSACTIONS</strong>, <strong>LEDGERLY INVENTORY</strong>, <strong>LEDGERLY TRANSPORT</strong>, <strong>LEDGERLY PRODUCTION</strong>, and <strong>LEDGERLY OPENING BALANCES</strong> tabs; the original tabs are preserved.</div>
         <div class="notice" style="margin-bottom:17px">Choose Print on a transaction for its invoice, receipt or voucher, or print a trip dispatch note from Transport &amp; export. In the print dialog, select “Save as PDF” to save a PDF copy.</div>
         <div class="section-heading" style="margin-top:24px"><div><h2>Opening balances &amp; balances carried down</h2><p>Enter balances as at a start date; later activity updates the carried-down balances without changing profit or loss.</p></div><div class="toolbar"><button class="primary" id="opening-balances-button">＋ Set opening balances</button><button class="secondary" id="download-balances-button" disabled>Download balances CSV</button><button class="quiet" id="print-balances-button" disabled>Print balances</button></div></div>
         <div class="notice" style="margin-bottom:14px">Enter each customer, supplier, lender and capital account separately. Credit sales/purchases and receipts/payments update the relevant balances. M-Pesa movements are included with cash. Opening balances are not income or expenses.</div>
@@ -458,6 +462,7 @@
   <script>
     "use strict";
     const STORAGE_KEY = "ledgerly-business-data-v1";
+    const WORKSPACE_STORAGE_KEY = "ledgerly-workspaces-v1";
     const SYNC_URL = "http://127.0.0.1:8765/sync";
     const openingItems = [
       { name: "PIPE", quantity: 1, unit: "ROLLS" },
@@ -475,44 +480,141 @@
       { name: "VELVET", quantity: 1, unit: "SHEETS" },
       { name: "MAUA", quantity: 1006, unit: "PIECES" }
     ];
-    const defaultData = () => ({
+    const defaultData = (includeOpeningStock = true) => ({
       version: 1,
       business: { name: "My business", phone: "", email: "", address: "", pin: "" },
       openingBalances: { asOfDate: "", accounts: [] },
-      items: openingItems.map((item, index) => ({ id: `opening-${index + 1}`, ...item, openingQuantity: item.quantity, openingCost: null })),
+      items: includeOpeningStock ? openingItems.map((item, index) => ({ id: `opening-${index + 1}`, ...item, openingQuantity: item.quantity, openingCost: null })) : [],
       transactions: [],
       productions: [],
       transports: [],
       syncBase: null,
       lastSyncedAt: null
     });
-    let data = loadData();
+    const workspaceStore = loadWorkspaceStore();
+    let activeCompanyId = workspaceStore.activeCompanyId;
+    let data = getActiveCompany().data;
     let activePage = "dashboard";
     let toastTimer;
 
-    function loadData() {
+    function normalizeData(parsed) {
+      if (parsed && parsed.version === 1 && Array.isArray(parsed.items) && Array.isArray(parsed.transactions)) {
+        return {
+          ...parsed,
+          openingBalances: parsed.openingBalances && Array.isArray(parsed.openingBalances.accounts)
+            ? { asOfDate: String(parsed.openingBalances.asOfDate || ""), accounts: parsed.openingBalances.accounts }
+            : { asOfDate: "", accounts: [] },
+          syncBase: parsed.syncBase ? { ...parsed.syncBase, openingBalances: parsed.syncBase.openingBalances || { asOfDate:"", accounts:[] } } : null,
+          productions: Array.isArray(parsed.productions) ? parsed.productions : [],
+          transports: Array.isArray(parsed.transports) ? parsed.transports : []
+        };
+      }
+      throw new Error("Unrecognized business data format.");
+    }
+    function legacyWorkbookPath() {
+      const path = decodeURIComponent(new URL("../COMPANY TRANSACTIONS AND BOOKKEEPING.xlsx", window.location.href).pathname);
+      return path.replace(/^\/([A-Za-z]:)/, "$1").replace(/\//g, "\\");
+    }
+    function loadWorkspaceStore() {
       try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return defaultData();
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.version === 1 && Array.isArray(parsed.items) && Array.isArray(parsed.transactions)) {
-          return {
-            ...parsed,
-            openingBalances: parsed.openingBalances && Array.isArray(parsed.openingBalances.accounts)
-              ? { asOfDate: String(parsed.openingBalances.asOfDate || ""), accounts: parsed.openingBalances.accounts }
-              : { asOfDate: "", accounts: [] },
-            syncBase: parsed.syncBase ? { ...parsed.syncBase, openingBalances: parsed.syncBase.openingBalances || { asOfDate:"", accounts:[] } } : null,
-            productions: Array.isArray(parsed.productions) ? parsed.productions : [],
-            transports: Array.isArray(parsed.transports) ? parsed.transports : []
-          };
+        const saved = localStorage.getItem(WORKSPACE_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed?.version === 1 && Array.isArray(parsed.companies) && parsed.companies.length) {
+            const companies = parsed.companies.map(company => ({
+              id: String(company.id || uniqueId("company")),
+              name: String(company.name || company.data?.business?.name || "My business"),
+              workbookPath: String(company.workbookPath || ""),
+              createWorkbookIfMissing: company.createWorkbookIfMissing === true,
+              data: normalizeData(company.data)
+            }));
+            const active = companies.some(company => company.id === parsed.activeCompanyId) ? parsed.activeCompanyId : companies[0].id;
+            return { version: 1, activeCompanyId: active, companies };
+          }
+          throw new Error("Saved company profiles could not be recognized. Your original data has not been changed.");
         }
-        throw new Error("Unrecognized backup format.");
+        const legacySaved = localStorage.getItem(STORAGE_KEY);
+        let legacyData = defaultData();
+        if (legacySaved) legacyData = normalizeData(JSON.parse(legacySaved));
+        const company = {
+          id: uniqueId("company"), name: legacyData.business?.name || "My business",
+          workbookPath: legacyWorkbookPath(), createWorkbookIfMissing: false, data: legacyData
+        };
+        const store = { version: 1, activeCompanyId: company.id, companies: [company] };
+        localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(store));
+        return store;
       } catch (error) {
-        console.error("Could not load saved business data:", error);
-        return defaultData();
+        console.error("Could not load separate company records:", error);
+        throw error;
       }
     }
-    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    function getActiveCompany() {
+      const company = workspaceStore.companies.find(row => row.id === activeCompanyId);
+      if (!company) throw new Error("The selected company profile could not be found.");
+      return company;
+    }
+    function saveWorkspaceStore(persistSelection = false) {
+      const localCompanies = workspaceStore.companies;
+      const latestRaw = localStorage.getItem(WORKSPACE_STORAGE_KEY);
+      let latest = null;
+      if (latestRaw) {
+        latest = JSON.parse(latestRaw);
+        if (latest?.version !== 1 || !Array.isArray(latest.companies)) {
+          throw new Error("Company data changed into an unrecognized format in another tab. Close extra Ledgerly tabs before continuing.");
+        }
+      }
+      if (latest) {
+        const merged = new Map(latest.companies.map(company => [String(company.id), company]));
+        for (const company of localCompanies) {
+          if (!merged.has(company.id) || company.id === activeCompanyId) merged.set(company.id, company);
+        }
+        workspaceStore.companies = [...merged.values()];
+        const latestActiveExists = workspaceStore.companies.some(company => company.id === latest.activeCompanyId);
+        workspaceStore.activeCompanyId = persistSelection || !latestActiveExists ? activeCompanyId : latest.activeCompanyId;
+      } else {
+        workspaceStore.companies = localCompanies;
+        workspaceStore.activeCompanyId = activeCompanyId;
+      }
+      localStorage.setItem(WORKSPACE_STORAGE_KEY, JSON.stringify(workspaceStore));
+    }
+    function refreshWorkspaceStore() {
+      const saved = localStorage.getItem(WORKSPACE_STORAGE_KEY);
+      if (!saved) return;
+      const latest = JSON.parse(saved);
+      if (latest?.version !== 1 || !Array.isArray(latest.companies)) {
+        throw new Error("Company data could not be refreshed. Close extra Ledgerly tabs and try again.");
+      }
+      const companies = latest.companies.map(company => ({
+        id: String(company.id),
+        name: String(company.name || company.data?.business?.name || "My business"),
+        workbookPath: String(company.workbookPath || ""),
+        createWorkbookIfMissing: company.createWorkbookIfMissing === true,
+        data: normalizeData(company.data)
+      }));
+      for (const company of workspaceStore.companies) {
+        if (!companies.some(row => row.id === company.id)) companies.push(company);
+      }
+      workspaceStore.companies = companies;
+      if (!companies.some(company => company.id === activeCompanyId)) activeCompanyId = companies[0].id;
+      workspaceStore.activeCompanyId = activeCompanyId;
+      data = getActiveCompany().data;
+    }
+    function saveData() {
+      const company = getActiveCompany();
+      company.data = data;
+      company.name = data.business.name || "My business";
+      saveWorkspaceStore();
+    }
+    function safeWorkbookName(name) {
+      return String(name || "Company").replace(/[<>:"/\\|?*\u0000-\u001f]/g, "-").replace(/[. ]+$/g, "").trim() || "Company";
+    }
+    function suggestedWorkbookPath(name) {
+      const base = decodeURIComponent(new URL("../", window.location.href).pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\//g, "\\");
+      return `${base}Ledgerly - ${safeWorkbookName(name)}.xlsx`;
+    }
+    function normalizedWorkbookPath(path) {
+      return String(path || "").trim().replace(/\//g, "\\").replace(/\\+$/g, "").toLocaleLowerCase();
+    }
     function escapeHtml(value) {
       return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
     }
@@ -1039,6 +1141,7 @@
       refreshDashboardGreeting();
       document.getElementById("business-name-side").textContent = data.business.name || "My business";
       document.getElementById("business-avatar").textContent = (data.business.name || "B").trim().charAt(0).toUpperCase();
+      document.getElementById("workspace-company-name").textContent = getActiveCompany().name;
       document.getElementById("today-pill").textContent = new Date().toLocaleDateString("en-KE", { weekday:"short", day:"numeric", month:"short", year:"numeric" });
       const syncSummary = document.getElementById("excel-sync-summary");
       if (syncSummary) {
@@ -1307,6 +1410,41 @@
         const index=existing?data.transports.findIndex(row=>row.id===existing.id):-1;
         if(index>=0) data.transports[index]=trip; else data.transports.push(trip);
         saveData();closeModal();renderAll();notify(existing?"Trip changes saved locally. Sync with Excel to update the workbook.":"Trip saved locally. Sync with Excel to update the workbook.");
+      });
+    }
+    function openCompanySwitcher() {
+      refreshWorkspaceStore();
+      const active = getActiveCompany();
+      const companyRows = workspaceStore.companies.map(company => `<button type="button" class="document-row" data-switch-company="${escapeHtml(company.id)}" style="width:100%;text-align:left;background:${company.id===activeCompanyId?"#f1f8f3":"#fff"};border:1px solid var(--line);border-radius:11px;margin:8px 0;padding:13px">
+        <div class="avatar">${escapeHtml((company.name||"B").trim().charAt(0).toUpperCase())}</div><div class="doc-info"><strong>${escapeHtml(company.name)}</strong><small>${company.id===activeCompanyId?"Currently active":"Separate records and Excel workbook"}</small></div><span aria-hidden="true">${company.id===activeCompanyId?"✓":"›"}</span>
+      </button>`).join("");
+      showModal("Your companies", "Each company has its own transactions, inventory, balances, reports, and Excel workbook.", `<div>${companyRows}</div><div class="modal-actions"><button type="button" class="primary" id="add-company-button">＋ Add another company</button></div>`);
+      document.querySelectorAll("[data-switch-company]").forEach(button=>button.addEventListener("click",()=>{
+        const nextId=button.dataset.switchCompany;
+        if(nextId===activeCompanyId) { closeModal(); return; }
+        activeCompanyId=nextId;
+        workspaceStore.activeCompanyId=nextId;
+        data=getActiveCompany().data;
+        saveWorkspaceStore(true);
+        closeModal();renderAll();notify(`Switched to ${getActiveCompany().name}.`);
+      }));
+      document.getElementById("add-company-button").addEventListener("click",openNewCompanyModal);
+    }
+    function openNewCompanyModal() {
+      showModal("Add a company", "This creates a separate, empty set of records. Existing company data stays unchanged.", `<form id="new-company-form"><div class="form-group"><label for="new-company-name">Company name</label><input class="field-control" id="new-company-name" name="name" required maxlength="100" placeholder="Enter the company or business name"></div><div class="notice" style="margin-top:13px">Opening inventory, transactions, account balances, and Excel workbook settings are kept separate for each company.</div><div class="modal-actions"><button type="button" class="quiet" id="cancel-new-company">Cancel</button><button type="submit" class="primary">Create company</button></div></form>`);
+      document.getElementById("cancel-new-company").addEventListener("click",openCompanySwitcher);
+      document.getElementById("new-company-form").addEventListener("submit",event=>{
+        event.preventDefault();
+        const name=String(new FormData(event.currentTarget).get("name")||"").trim();
+        if(!name) { notify("Enter a company name."); return; }
+        const companyData=defaultData(false);
+        companyData.business.name=name;
+        const company={id:uniqueId("company"),name,workbookPath:"",createWorkbookIfMissing:true,data:companyData};
+        workspaceStore.companies.push(company);
+        activeCompanyId=company.id;
+        workspaceStore.activeCompanyId=company.id;
+        data=companyData;
+        saveWorkspaceStore(true);closeModal();renderAll();notify(`${name} is ready. Its records are separate from other companies.`);
       });
     }
     function openBusinessModal() {
@@ -1866,10 +2004,11 @@
       }
     }
     async function requestExcelSync(payload, token) {
+      const company=getActiveCompany();
       const response = await fetch(SYNC_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, token })
+        body: JSON.stringify({ ...payload, workbookPath:company.workbookPath, createWorkbookIfMissing:company.createWorkbookIfMissing, token })
       });
       let result;
       try { result = await response.json(); } catch { result = {}; }
@@ -1932,10 +2071,15 @@
       });
     }
     function openSyncModal() {
+      refreshWorkspaceStore();
       const token=sessionStorage.getItem("ledgerly-excel-sync-token")||"";
-      showModal("Sync with your Excel workbook", "Review changes on both sides before resolving conflicts.", `<div class="notice" style="margin-bottom:13px"><strong>Before you sync</strong><br>1. Double-click <strong>start-ledgerly-sync.cmd</strong> in the same folder as this app.<br>2. Copy the one-time token shown in its PowerShell window into the field below.<br>3. Save any Excel edits, then sync. The connector is local to this computer.</div>
+      const company=getActiveCompany();
+      const workbookPath=company.workbookPath||suggestedWorkbookPath(company.name);
+      showModal("Sync this company's Excel workbook", `Workbook settings are stored only for ${company.name}.`, `<div class="notice" style="margin-bottom:13px"><strong>Keep company files separate</strong><br>1. Double-click <strong>start-ledgerly-sync.cmd</strong> in the app folder.<br>2. Use a different full .xlsx file path for every company.<br>3. Copy the one-time token shown below. Save Excel edits before syncing. The connector is local to this computer.</div>
         <form id="excel-sync-form"><div class="form-group"><label for="excel-sync-token">One-time connector token</label><input class="field-control" id="excel-sync-token" name="token" autocomplete="off" required value="${escapeHtml(token)}" placeholder="Paste the token from the connector window"></div>
-        <div class="help-text" style="margin-top:7px">The workbook’s original tabs are preserved. Sync uses the editable LEDGERLY TRANSACTIONS, LEDGERLY INVENTORY, LEDGERLY TRANSPORT, LEDGERLY PRODUCTION, and LEDGERLY OPENING BALANCES tabs.</div>
+        <div class="form-group" style="margin-top:12px"><label for="excel-workbook-path">Full path to this company's Excel workbook</label><input class="field-control" id="excel-workbook-path" name="workbookPath" required maxlength="500" value="${escapeHtml(workbookPath)}" placeholder="C:\\Users\\YourName\\Documents\\Company.xlsx"><span class="help-text">Each company must use its own workbook file. If the file does not exist, Ledgerly can create a new workbook at this path.</span></div>
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-top:9px;font-size:12px"><input type="checkbox" id="create-company-workbook" ${company.createWorkbookIfMissing?"checked":""}> Create the workbook if this file does not exist</label>
+        <div class="help-text" style="margin-top:9px">The workbook’s original tabs are preserved. Sync uses the editable LEDGERLY TRANSACTIONS, LEDGERLY INVENTORY, LEDGERLY TRANSPORT, LEDGERLY PRODUCTION, and LEDGERLY OPENING BALANCES tabs.</div>
         <div class="notice" id="excel-sync-status" style="display:none;margin-top:12px"></div>
         <div class="modal-actions"><button type="button" class="quiet" id="cancel-excel-sync">Cancel</button><button type="submit" class="primary" id="run-excel-sync">Read, merge &amp; sync</button></div></form>`);
       document.getElementById("cancel-excel-sync").addEventListener("click",closeModal);
@@ -1944,6 +2088,17 @@
         const syncButton=document.getElementById("run-excel-sync"),status=document.getElementById("excel-sync-status");
         const currentToken=document.getElementById("excel-sync-token").value.trim();
         if(!currentToken){notify("Paste the connector token first.");return;}
+        const selectedCompany=getActiveCompany();
+        const selectedPath=String(document.getElementById("excel-workbook-path").value||"").trim();
+        if(!/^(?:[A-Za-z]:\\|\\\\)/.test(selectedPath)||!selectedPath.toLowerCase().endsWith(".xlsx")) {
+          notify("Enter a full Windows path ending in .xlsx for this company's workbook.");return;
+        }
+        const pathKey=normalizedWorkbookPath(selectedPath);
+        const sharedWith=workspaceStore.companies.find(company=>company.id!==activeCompanyId&&normalizedWorkbookPath(company.workbookPath)===pathKey);
+        if(sharedWith) { notify(`That workbook is already assigned to ${sharedWith.name}. Choose a different file for each company.`);return; }
+        selectedCompany.workbookPath=selectedPath;
+        selectedCompany.createWorkbookIfMissing=document.getElementById("create-company-workbook").checked;
+        saveWorkspaceStore();
         sessionStorage.setItem("ledgerly-excel-sync-token",currentToken);
         syncButton.disabled=true;syncButton.textContent="Reading workbook…";status.style.display="block";status.classList.remove("warning");status.textContent="Reading workbook changes and comparing them with the app…";
         try {
@@ -1968,6 +2123,7 @@
     document.querySelectorAll(".nav button").forEach(button=>button.addEventListener("click",()=>navigate(button.dataset.page)));
     document.querySelectorAll("[data-nav]").forEach(button=>button.addEventListener("click",()=>navigate(button.dataset.nav)));
     document.getElementById("new-transaction-button").addEventListener("click",()=>openTransactionModal("sale"));
+    document.getElementById("company-switch-button").addEventListener("click",openCompanySwitcher);
     document.getElementById("sync-excel-button").addEventListener("click",openSyncModal);
     document.getElementById("transaction-new-button").addEventListener("click",()=>openTransactionModal("sale"));
     document.querySelectorAll("[data-quick-type]").forEach(button=>button.addEventListener("click",()=>openTransactionModal(button.dataset.quickType)));

@@ -6,6 +6,8 @@ param(
 $ErrorActionPreference = "Stop"
 $script:ExcelApp = $null
 $script:Workbook = $null
+$script:ActiveWorkbookPath = [IO.Path]::GetFullPath($WorkbookPath)
+$script:CreateWorkbookIfMissing = $false
 $script:TransactionHeaders = @("ID", "Number", "Date", "Type", "Party", "Description", "Item", "Quantity", "Unit", "Unit Price (KES)", "Amount (KES)", "Payment", "Reference", "Notes", "Created At", "Item ID")
 $script:InventoryHeaders = @("ID", "Item Name", "Unit", "Opening Quantity", "Opening Unit Cost (KES)")
 $script:TransportHeaders = @("ID", "Trip Number", "Load Carried", "Carried By", "Departure Date & Time", "Arrival Date & Time", "Total Mileage", "Mileage Unit", "Fuel Cost (KES)", "Additional Costs (KES)", "Additional Cost Details", "Load Value (KES)", "Payment", "Notes", "Created At")
@@ -14,18 +16,27 @@ $script:OpeningBalanceHeaders = @("ID", "Balance Date", "Account Type", "Account
 $script:Token = [Guid]::NewGuid().ToString("N")
 
 function Get-Workbook {
-  if ($script:Workbook) { return $script:Workbook }
-  if (-not (Test-Path -LiteralPath $WorkbookPath -PathType Leaf)) {
-    throw "Workbook not found: $WorkbookPath"
+  $fullPath = [IO.Path]::GetFullPath($script:ActiveWorkbookPath)
+  if ($script:Workbook) {
+    try {
+      if ([IO.Path]::GetFullPath([string]$script:Workbook.FullName) -ieq $fullPath) { return $script:Workbook }
+    } catch { }
   }
-
-  $fullPath = [IO.Path]::GetFullPath($WorkbookPath)
-  $excel = $null
-  try {
-    $excel = [Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")
-  } catch {
-    $excel = New-Object -ComObject Excel.Application
-    $excel.Visible = $true
+  $exists = Test-Path -LiteralPath $fullPath -PathType Leaf
+  if (-not $exists -and -not $script:CreateWorkbookIfMissing) {
+    throw "Workbook not found: $fullPath. Check the company workbook path or enable workbook creation."
+  }
+  $directory = [IO.Path]::GetDirectoryName($fullPath)
+  if (-not (Test-Path -LiteralPath $directory -PathType Container)) {
+    throw "The folder for this company's workbook does not exist: $directory"
+  }
+  $excel = $script:ExcelApp
+  if (-not $excel) {
+    try {
+      $excel = [Runtime.InteropServices.Marshal]::GetActiveObject("Excel.Application")
+    } catch {
+      $excel = New-Object -ComObject Excel.Application
+    }
   }
   $excel.Visible = $true
 
@@ -39,7 +50,17 @@ function Get-Workbook {
     } catch { }
   }
   if (-not $book) {
-    $book = $excel.Workbooks.Open($fullPath, 0, $false)
+    if ($exists) {
+      $book = $excel.Workbooks.Open($fullPath, 0, $false)
+    } else {
+      $book = $excel.Workbooks.Add()
+      try {
+        $book.SaveAs($fullPath, 51)
+      } catch {
+        $book.Close($false)
+        throw "Could not create the Excel workbook at $fullPath. $($_.Exception.Message)"
+      }
+    }
   }
   if ($book.ReadOnly) {
     throw "The workbook is open read-only. Close that copy, reopen it with editing enabled, then sync again."
@@ -343,6 +364,16 @@ function Read-WorkbookState {
   $transports = Read-Transports
   $openingBalances = Read-OpeningBalances
   return [pscustomobject]@{ items = @($items); transactions = @($transactions); productions = @($productions); transports = @($transports); openingBalances = $openingBalances }
+}
+
+function New-EmptyWorkbookState {
+  return [pscustomobject]@{
+    items = @()
+    transactions = @()
+    productions = @()
+    transports = @()
+    openingBalances = [pscustomobject]@{ asOfDate = ""; accounts = @() }
+  }
 }
 
 function Read-Transports {
@@ -787,12 +818,11 @@ function Send-Response($Stream, [int]$Status, [string]$Reason, [string]$Body) {
 }
 
 if ($Port -lt 1024 -or $Port -gt 65535) { throw "Port must be between 1024 and 65535." }
-if (-not (Test-Path -LiteralPath $WorkbookPath -PathType Leaf)) { throw "Workbook not found: $WorkbookPath" }
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $Port)
 try {
   $listener.Start()
   Write-Host "Ledgerly Excel connector is running on this computer only." -ForegroundColor Green
-  Write-Host "Workbook: $([IO.Path]::GetFullPath($WorkbookPath))"
+  Write-Host "Default workbook path: $([IO.Path]::GetFullPath($WorkbookPath))"
   Write-Host "One-time sync token: $script:Token" -ForegroundColor Yellow
   Write-Host "Paste the token into Ledgerly. Keep this window open; press Ctrl+C to stop."
   while ($true) {
@@ -811,8 +841,21 @@ try {
           Send-Response $stream 401 "Unauthorized" '{"error":"The connector token is incorrect or expired. Copy the current token from the PowerShell window."}'
         } else {
           try {
+            $requestedPath = [string]$request.body.workbookPath
+            if ([string]::IsNullOrWhiteSpace($requestedPath)) { $requestedPath = $WorkbookPath }
+            if (-not [IO.Path]::IsPathRooted($requestedPath) -or [IO.Path]::GetExtension($requestedPath) -ine ".xlsx") {
+              throw "Use a full Windows path ending in .xlsx for this company's workbook."
+            }
+            $script:ActiveWorkbookPath = [IO.Path]::GetFullPath($requestedPath)
+            $script:CreateWorkbookIfMissing = [bool]$request.body.createWorkbookIfMissing
             if ($request.body.action -eq "read") {
-              $result = Read-WorkbookState
+              if (Test-Path -LiteralPath $script:ActiveWorkbookPath -PathType Leaf) {
+                $result = Read-WorkbookState
+              } elseif ($script:CreateWorkbookIfMissing) {
+                $result = New-EmptyWorkbookState
+              } else {
+                throw "Workbook not found: $script:ActiveWorkbookPath. Check the company workbook path or enable workbook creation."
+              }
             } elseif ($request.body.action -eq "write") {
               if ($null -eq $request.body.state) { throw "Sync data is missing." }
               $result = Write-WorkbookState $request.body.state
